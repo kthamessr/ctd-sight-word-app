@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getPromptConfig, playAudioPrompt } from './sessionUtils';
 import { playCorrectChime, playIncorrectSound } from './audioUtils';
+import { getRandomWords } from './sightWordsData';
 
 interface GameProps {
   level: number;
@@ -47,12 +48,10 @@ export default function SessionGame({ level, sessionNumber, targetWords, onGameC
       const shuffled = [...targetWords].sort(() => Math.random() - 0.5);
       words = shuffled.slice(0, 10);
     } else {
-      const { getRandomWords } = require('./sightWordsData');
       words = getRandomWords(level === 0 ? 1 : level, 10);
     }
 
     const questionsData: Question[] = words.map((word: string) => {
-      const { getRandomWords } = require('./sightWordsData');
       const allOptions = [word, ...getRandomWords(level === 0 ? 1 : level, 3).filter((w: string) => w !== word)].sort(
         () => Math.random() - 0.5
       );
@@ -166,21 +165,6 @@ export default function SessionGame({ level, sessionNumber, targetWords, onGameC
         onGameComplete({ correct: newCorrect, total: questions.length, newStreak: newCorrect === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked });
       }
     }, 2000);
-  };
-
-  const handleNext = () => {
-    if (currentQuestion + 1 < questions.length) {
-      setCurrentQuestion(currentQuestion + 1);
-      setAnswered(false);
-      setSelectedAnswer(null);
-      setTimeLeft(10);
-      setIsTimerRunning(true);
-      setShowPrompt(false);
-      setPromptDelayRemaining(promptConfig.delay);
-    } else {
-      const wordsAsked = questions.map((q) => q.word);
-      onGameComplete({ correct, total: questions.length, newStreak: correct === questions.length ? 1 : 0, responsesTimes, wordsAsked });
-    }
   };
 
   const isCorrect = selectedAnswer === currentWord;

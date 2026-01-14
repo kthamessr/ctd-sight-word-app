@@ -1,6 +1,6 @@
 // Audio utility functions for game sounds
 
-let backgroundMusic: HTMLAudioElement | null = null;
+const backgroundMusic: HTMLAudioElement | null = null;
 let isMusicPlaying = false;
 
 /**
@@ -11,7 +11,8 @@ export function playBackgroundMusic() {
 
   // Create a simple upbeat background melody using Web Audio API
   if (typeof window !== 'undefined') {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const audioContext = new AudioContextClass();
     
     // Simple melody notes (frequencies in Hz)
     const melody = [
@@ -77,7 +78,8 @@ export function stopBackgroundMusic() {
 export function playCorrectChime() {
   if (typeof window === 'undefined') return;
 
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const audioContext = new AudioContextClass();
   const now = audioContext.currentTime;
 
   // Create a pleasant ascending chime (3 notes)
@@ -112,7 +114,8 @@ export function playCorrectChime() {
 export function playIncorrectSound() {
   if (typeof window === 'undefined') return;
 
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const audioContext = new AudioContextClass();
   const now = audioContext.currentTime;
 
   // Create a gentle descending tone

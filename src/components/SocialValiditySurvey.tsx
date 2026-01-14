@@ -19,6 +19,40 @@ export interface SurveyResponses {
   q7_difficulties: string;
 }
 
+interface RatingScaleProps {
+  question: string;
+  label: string;
+  currentValue: number | undefined;
+  onRatingChange: (question: string, value: number) => void;
+}
+
+function RatingScale({ question, label, currentValue, onRatingChange }: RatingScaleProps) {
+  return (
+    <div className="mb-6">
+      <p className="font-semibold text-gray-700 mb-3">{label}</p>
+      <div className="flex gap-2 justify-between">
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            key={value}
+            onClick={() => onRatingChange(question, value)}
+            className={`flex-1 py-3 rounded-lg font-bold transition-all ${
+              currentValue === value
+                ? 'bg-purple-600 text-white transform scale-105'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+      <div className="flex justify-between text-xs text-gray-500 mt-1">
+        <span>Strongly Disagree</span>
+        <span>Strongly Agree</span>
+      </div>
+    </div>
+  );
+}
+
 export default function SocialValiditySurvey({ onComplete, participantId = '' }: SocialValiditySurveyProps) {
   const [responses, setResponses] = useState<Partial<SurveyResponses>>({
     participantId,
@@ -59,35 +93,6 @@ export default function SocialValiditySurvey({ onComplete, participantId = '' }:
     }
   };
 
-  const RatingScale = ({ question, label }: { question: string; label: string }) => {
-    const currentValue = responses[question as keyof SurveyResponses] as number | undefined;
-
-    return (
-      <div className="mb-6">
-        <p className="font-semibold text-gray-700 mb-3">{label}</p>
-        <div className="flex gap-2 justify-between">
-          {[1, 2, 3, 4, 5].map((value) => (
-            <button
-              key={value}
-              onClick={() => handleRatingChange(question, value)}
-              className={`flex-1 py-3 rounded-lg font-bold transition-all ${
-                currentValue === value
-                  ? 'bg-purple-600 text-white transform scale-105'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {value}
-            </button>
-          ))}
-        </div>
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>Strongly Disagree</span>
-          <span>Strongly Agree</span>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8 text-center">
@@ -112,18 +117,29 @@ export default function SocialValiditySurvey({ onComplete, participantId = '' }:
         <RatingScale
           question="q1_helpfulness"
           label="1. This intervention was helpful in improving sight word recognition."
+          currentValue={responses.q1_helpfulness}
+          onRatingChange={handleRatingChange}
         />
 
         <RatingScale
           question="q2_engagement"
           label="2. The intervention was engaging and maintained my/the participant's attention."
+          currentValue={responses.q2_engagement}
+          onRatingChange={handleRatingChange}
         />
 
-        <RatingScale question="q3_easeOfUse" label="3. The app was easy to use and navigate." />
+        <RatingScale 
+          question="q3_easeOfUse" 
+          label="3. The app was easy to use and navigate."
+          currentValue={responses.q3_easeOfUse}
+          onRatingChange={handleRatingChange}
+        />
 
         <RatingScale
           question="q4_wouldRecommend"
           label="4. I would recommend this intervention to others working on sight words."
+          currentValue={responses.q4_wouldRecommend}
+          onRatingChange={handleRatingChange}
         />
       </div>
 

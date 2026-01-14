@@ -43,7 +43,7 @@ export default function DataExport({ onBack, participantId }: DataExportProps) {
     ];
 
     const rows = sessions.map((session) => {
-      const avgResponseTime = (session.timeToRespond.reduce((a, b) => a + b, 0) / session.timeToRespond.length).toFixed(2);
+      const avgResponseTime = (session.timeToRespond.reduce((a: number, b: number) => a + b, 0) / session.timeToRespond.length).toFixed(2);
       const promptType = session.sessionNumber <= 2 ? 'Immediate' : '3sec Delay';
 
       return [
@@ -55,7 +55,7 @@ export default function DataExport({ onBack, participantId }: DataExportProps) {
         avgResponseTime,
         promptType,
         session.wordsAsked.join('; '),
-        session.timeToRespond.map((t) => t.toFixed(2)).join('; '),
+        session.timeToRespond.map((t: number) => t.toFixed(2)).join('; '),
       ];
     });
 

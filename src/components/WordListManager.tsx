@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface WordListManagerProps {
   onSave: (words: string[]) => void;

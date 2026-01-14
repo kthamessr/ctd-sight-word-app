@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  reactCompiler: true,
+  reactCompiler: false, // Disabled to allow build with setState-in-effect patterns
 };
 
 export default nextConfig;

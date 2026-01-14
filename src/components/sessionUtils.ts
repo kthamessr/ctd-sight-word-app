@@ -1,6 +1,6 @@
 'use client';
 
-interface SessionData {
+export interface SessionData {
   sessionNumber: number;
   date: string;
   correctAnswers: number;

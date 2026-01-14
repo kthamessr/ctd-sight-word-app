@@ -54,7 +54,7 @@ export default function SessionHistory({ sessions, onNewSession, onExportData }:
               <tbody className="divide-y divide-gray-200">
                 {sessions.map((session, index) => {
                   const promptType = session.sessionNumber <= 2 ? 'Immediate' : '3sec Delay';
-                  const avgResponseTime = (session.timeToRespond.reduce((a, b) => a + b, 0) / session.timeToRespond.length).toFixed(2);
+                  const avgResponseTime = (session.timeToRespond.reduce((a: number, b: number) => a + b, 0) / session.timeToRespond.length).toFixed(2);
 
                   return (
                     <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
