@@ -1,3 +1,7 @@
+# Ausome Academic Activities
+
+A gamified sight-word intervention app using ABA Constant Time Delay protocol.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
