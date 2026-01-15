@@ -9,6 +9,7 @@ export interface SessionData {
   timeToRespond: number[];
   wordsAsked: string[];
   phase?: 'baseline' | 'intervention';
+  promptType?: 'immediate' | 'delay'; // Track whether immediate prompt or constant time delay
 }
 
 interface AudioPromptConfig {
@@ -43,6 +44,7 @@ export function createSessionData(
   wordsAsked: string[],
   phase: 'baseline' | 'intervention' = 'intervention'
 ): SessionData {
+  const promptConfig = getPromptConfig(sessionNumber);
   return {
     sessionNumber,
     date: new Date().toISOString(),
@@ -52,18 +54,56 @@ export function createSessionData(
     timeToRespond: responsesTimes,
     wordsAsked,
     phase,
+    promptType: promptConfig.immediate ? 'immediate' : 'delay',
   };
 }
 
-export function calculateMastery(sessions: SessionData[]): { achieved: boolean; accuracy: number } {
-  // ABA mastery criteria: 80% accuracy across last 3 sessions or 90% on current session
-  if (sessions.length === 0) return { achieved: false, accuracy: 0 };
+export function calculateMastery(sessions: SessionData[]): { 
+  achieved: boolean; 
+  accuracy: number;
+  promptedAccuracy: number;
+  unpromptedAccuracy: number;
+  promptedSessions: number;
+  unpromptedSessions: number;
+} {
+  // Separate tracking: Prompted (immediate) vs Unprompted (constant time delay)
+  if (sessions.length === 0) {
+    return { 
+      achieved: false, 
+      accuracy: 0,
+      promptedAccuracy: 0,
+      unpromptedAccuracy: 0,
+      promptedSessions: 0,
+      unpromptedSessions: 0,
+    };
+  }
 
-  const recentSessions = sessions.slice(-3);
-  const avgAccuracy = recentSessions.reduce((sum, s) => sum + s.accuracy, 0) / recentSessions.length;
+  // Filter sessions by prompt type
+  const promptedSessions = sessions.filter(s => s.promptType === 'immediate');
+  const unpromptedSessions = sessions.filter(s => s.promptType === 'delay');
+
+  // Calculate accuracies
+  const promptedAccuracy = promptedSessions.length > 0 
+    ? promptedSessions.reduce((sum, s) => sum + s.accuracy, 0) / promptedSessions.length
+    : 0;
+
+  const unpromptedAccuracy = unpromptedSessions.length > 0
+    ? unpromptedSessions.slice(-3).reduce((sum, s) => sum + s.accuracy, 0) / Math.min(unpromptedSessions.length, 3)
+    : 0;
+
+  // Mastery achieved when unprompted (independent) performance reaches 80% across last 3 sessions
+  // or 90% on last unprompted session
+  const unpromptedMastery = unpromptedSessions.length > 0 && (
+    unpromptedAccuracy >= 80 || 
+    unpromptedSessions[unpromptedSessions.length - 1].accuracy >= 90
+  );
 
   return {
-    achieved: avgAccuracy >= 80 || sessions[sessions.length - 1].accuracy >= 90,
-    accuracy: avgAccuracy,
+    achieved: unpromptedMastery,
+    accuracy: sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length,
+    promptedAccuracy,
+    unpromptedAccuracy,
+    promptedSessions: promptedSessions.length,
+    unpromptedSessions: unpromptedSessions.length,
   };
 }

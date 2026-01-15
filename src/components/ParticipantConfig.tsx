@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export interface ParticipantInfo {
   gradeLevel: number;
@@ -14,8 +14,20 @@ interface ParticipantConfigProps {
 }
 
 export default function ParticipantConfig({ participantId, onSave, currentInfo }: ParticipantConfigProps) {
-  const [gradeLevel, setGradeLevel] = useState(currentInfo?.gradeLevel || 5);
-  const [readingLevel, setReadingLevel] = useState(currentInfo?.readingLevel || 5);
+  const [gradeLevel, setGradeLevel] = useState(5);
+  const [readingLevel, setReadingLevel] = useState(5);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Set initial values after hydration
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      if (currentInfo) {
+        setGradeLevel(currentInfo.gradeLevel);
+        setReadingLevel(currentInfo.readingLevel);
+      }
+      setIsHydrated(true);
+    });
+  }, [currentInfo]);
 
   const handleSave = () => {
     if (readingLevel >= gradeLevel) {
@@ -24,6 +36,11 @@ export default function ParticipantConfig({ participantId, onSave, currentInfo }
     }
     onSave({ gradeLevel, readingLevel });
   };
+
+  // Don't render until after hydration to avoid mismatch
+  if (!isHydrated) {
+    return <div className="text-center py-8">Loading...</div>;
+  }
 
   return (
     <div className="max-w-2xl mx-auto">

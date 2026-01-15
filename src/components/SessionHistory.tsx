@@ -13,26 +13,31 @@ export default function SessionHistory({ sessions, onNewSession, onExportData }:
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Total Sessions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Prompted Sessions */}
         <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg p-6 text-white shadow-lg">
-          <div className="text-sm font-semibold opacity-90">Total Sessions</div>
-          <div className="text-4xl font-bold">{sessions.length}</div>
+          <div className="text-sm font-semibold opacity-90">Prompted Sessions (Immediate Prompt)</div>
+          <div className="text-4xl font-bold">{mastery.promptedSessions}</div>
+          <div className="text-lg mt-2">{mastery.promptedAccuracy.toFixed(1)}% accuracy</div>
         </div>
 
-        {/* Average Accuracy */}
+        {/* Unprompted Sessions */}
         <div className="bg-gradient-to-br from-green-400 to-green-600 rounded-lg p-6 text-white shadow-lg">
-          <div className="text-sm font-semibold opacity-90">Average Accuracy</div>
-          <div className="text-4xl font-bold">
-            {sessions.length > 0 ? (sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length).toFixed(1) : 0}%
-          </div>
+          <div className="text-sm font-semibold opacity-90">Unprompted Sessions (Constant Time Delay)</div>
+          <div className="text-4xl font-bold">{mastery.unpromptedSessions}</div>
+          <div className="text-lg mt-2">{mastery.unpromptedAccuracy.toFixed(1)}% accuracy</div>
         </div>
+      </div>
 
-        {/* Mastery Status */}
-        <div className={`bg-gradient-to-br ${mastery.achieved ? 'from-purple-400 to-purple-600' : 'from-orange-400 to-orange-600'} rounded-lg p-6 text-white shadow-lg`}>
-          <div className="text-sm font-semibold opacity-90">Mastery Status</div>
-          <div className="text-2xl font-bold">{mastery.achieved ? '🏆 Achieved' : '📈 In Progress'}</div>
-          <div className="text-sm mt-2 opacity-90">{mastery.accuracy.toFixed(1)}% avg</div>
+      {/* Mastery Status */}
+      <div className={`bg-gradient-to-br ${mastery.achieved ? 'from-purple-400 to-purple-600' : 'from-orange-400 to-orange-600'} rounded-lg p-6 text-white shadow-lg`}>
+        <div className="text-sm font-semibold opacity-90">🎯 Mastery Status (Based on Unprompted Performance)</div>
+        <div className="text-2xl font-bold">{mastery.achieved ? '🏆 Achieved' : '📈 In Progress'}</div>
+        <div className="text-sm mt-2 opacity-90">
+          {mastery.achieved 
+            ? '80%+ accuracy achieved across last 3 unprompted sessions'
+            : `Current: ${mastery.unpromptedAccuracy.toFixed(1)}% - Target: 80%`
+          }
         </div>
       </div>
 
@@ -53,7 +58,8 @@ export default function SessionHistory({ sessions, onNewSession, onExportData }:
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {sessions.map((session, index) => {
-                  const promptType = session.sessionNumber <= 2 ? 'Immediate' : '3sec Delay';
+                  const promptType = session.promptType === 'immediate' ? 'Immediate Prompt' : 'Constant Time Delay';
+                  const promptIcon = session.promptType === 'immediate' ? '⚡' : '⏱️';
                   const avgResponseTime = (session.timeToRespond.reduce((a: number, b: number) => a + b, 0) / session.timeToRespond.length).toFixed(2);
 
                   return (
@@ -71,7 +77,7 @@ export default function SessionHistory({ sessions, onNewSession, onExportData }:
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {promptType === 'Immediate' ? '⚡' : '⏱️'} {promptType}
+                        {promptIcon} {promptType}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">{avgResponseTime}s</td>
                     </tr>
