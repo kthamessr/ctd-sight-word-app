@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react';
 
 interface HomeScreenProps {
   onStartGame: (level: number) => void;
+  participantId: string;
 }
 
-export default function HomeScreen({ onStartGame }: HomeScreenProps) {
+export default function HomeScreen({ onStartGame, participantId }: HomeScreenProps) {
   const [hasTargetWords, setHasTargetWords] = useState(false);
 
   useEffect(() => {
-    const savedWords = localStorage.getItem('targetWords');
+    const storageKey = `${participantId}::targetWords`;
+    const savedWords = localStorage.getItem(storageKey);
     setHasTargetWords(!!savedWords && JSON.parse(savedWords).length > 0);
-  }, []);
+  }, [participantId]);
 
   return (
     <div className="text-center flex flex-col items-center justify-center min-h-[500px]">

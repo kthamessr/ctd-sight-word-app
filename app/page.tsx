@@ -155,7 +155,7 @@ export default function Page() {
 
         {/* Main Content */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} />}
+          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} participantId={participantId} />}
           {gameState === 'playing' && (
             <SessionGame level={level} sessionNumber={sessionNumber} onGameComplete={handleGameComplete} onCancel={() => setGameState('history')} targetWords={level === 0 ? targetWords : undefined} />
           )}
