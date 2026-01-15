@@ -8,6 +8,7 @@ export interface SessionData {
   accuracy: number;
   timeToRespond: number[];
   wordsAsked: string[];
+  phase?: 'baseline' | 'intervention';
 }
 
 interface AudioPromptConfig {
@@ -39,7 +40,8 @@ export function createSessionData(
   correct: number,
   total: number,
   responsesTimes: number[],
-  wordsAsked: string[]
+  wordsAsked: string[],
+  phase: 'baseline' | 'intervention' = 'intervention'
 ): SessionData {
   return {
     sessionNumber,
@@ -49,6 +51,7 @@ export function createSessionData(
     accuracy: (correct / total) * 100,
     timeToRespond: responsesTimes,
     wordsAsked,
+    phase,
   };
 }
 

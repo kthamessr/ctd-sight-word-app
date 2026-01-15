@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SessionData } from './sessionUtils';
 import { SurveyResponses } from './SocialValiditySurvey';
 
@@ -11,23 +11,25 @@ interface DataExportProps {
 
 export default function DataExport({ onBack, participantId }: DataExportProps) {
   const [sessions, setSessions] = useState<SessionData[]>([]);
+  const [baselineSessions, setBaselineSessions] = useState<SessionData[]>([]);
   const [surveys, setSurveys] = useState<SurveyResponses[]>([]);
   const [targetWords, setTargetWords] = useState<string[]>([]);
 
-  const storageKey = (name: string) => `${participantId || 'default'}::${name}`;
+  const storageKey = useCallback((name: string) => `${participantId || 'default'}::${name}`,[participantId]);
 
   useEffect(() => {
     const savedSessions = localStorage.getItem(storageKey('sightWordsSessions'));
+    const savedBaseline = localStorage.getItem(storageKey('baselineSessions'));
     const savedSurveys = localStorage.getItem(storageKey('socialValiditySurveys'));
     const savedWords = localStorage.getItem(storageKey('targetWords'));
 
-    if (savedSessions) setSessions(JSON.parse(savedSessions));
-    else setSessions([]);
-    if (savedSurveys) setSurveys(JSON.parse(savedSurveys));
-    else setSurveys([]);
-    if (savedWords) setTargetWords(JSON.parse(savedWords));
-    else setTargetWords([]);
-  }, [participantId]);
+    Promise.resolve().then(() => {
+      setSessions(savedSessions ? JSON.parse(savedSessions) : []);
+      setBaselineSessions(savedBaseline ? JSON.parse(savedBaseline) : []);
+      setSurveys(savedSurveys ? JSON.parse(savedSurveys) : []);
+      setTargetWords(savedWords ? JSON.parse(savedWords) : []);
+    });
+  }, [storageKey]);
 
   const downloadSessionsCSV = () => {
     const headers = [
@@ -66,6 +68,42 @@ export default function DataExport({ onBack, participantId }: DataExportProps) {
     const link = document.createElement('a');
     link.href = url;
     link.download = `ctd-sessions-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const downloadBaselineCSV = () => {
+    if (baselineSessions.length === 0) {
+      alert('No baseline data available');
+      return;
+    }
+
+    const headers = [
+      'Baseline Session',
+      'Date',
+      'Correct Answers',
+      'Total Questions',
+      'Accuracy (%)',
+      'Words Tested',
+      'Response Times (s)',
+    ];
+
+    const rows = baselineSessions.map((session) => [
+      session.sessionNumber,
+      new Date(session.date).toLocaleDateString(),
+      session.correctAnswers,
+      session.totalQuestions,
+      session.accuracy.toFixed(2),
+      session.wordsAsked.join('; '),
+      session.timeToRespond.map((t: number) => t.toFixed(2)).join('; '),
+    ]);
+
+    const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ctd-baseline-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
@@ -114,9 +152,11 @@ export default function DataExport({ onBack, participantId }: DataExportProps) {
       exportDate: new Date().toISOString(),
       participantId,
       targetWords,
+      baselineSessions,
       sessions,
       surveys,
       summary: {
+        totalBaselineSessions: baselineSessions.length,
         totalSessions: sessions.length,
         totalSurveys: surveys.length,
         overallAccuracy: sessions.length > 0 ? (sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length).toFixed(2) : 0,
@@ -135,10 +175,12 @@ export default function DataExport({ onBack, participantId }: DataExportProps) {
   const clearAllData = () => {
     if (confirm('⚠️ Are you sure you want to clear ALL data? This cannot be undone! Make sure you have exported your data first.')) {
       localStorage.removeItem(storageKey('sightWordsSessions'));
+      localStorage.removeItem(storageKey('baselineSessions'));
       localStorage.removeItem(storageKey('socialValiditySurveys'));
       localStorage.removeItem(storageKey('targetWords'));
       alert('All data has been cleared.');
       setSessions([]);
+      setBaselineSessions([]);
       setSurveys([]);
       setTargetWords([]);
     }
@@ -153,6 +195,10 @@ export default function DataExport({ onBack, participantId }: DataExportProps) {
         <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg p-6 text-white shadow-lg">
           <div className="text-sm font-semibold opacity-90">Total Sessions</div>
           <div className="text-4xl font-bold">{sessions.length}</div>
+        </div>
+        <div className="bg-gradient-to-br from-slate-400 to-slate-600 rounded-lg p-6 text-white shadow-lg">
+          <div className="text-sm font-semibold opacity-90">Baseline Sessions</div>
+          <div className="text-4xl font-bold">{baselineSessions.length}</div>
         </div>
         <div className="bg-gradient-to-br from-green-400 to-green-600 rounded-lg p-6 text-white shadow-lg">
           <div className="text-sm font-semibold opacity-90">Survey Responses</div>
@@ -183,6 +229,24 @@ export default function DataExport({ onBack, participantId }: DataExportProps) {
                 <div className="text-sm text-gray-600">
                   Download all session data for statistical analysis in SPSS, Excel, or R
                 </div>
+              </div>
+              <div className="text-2xl">→</div>
+            </div>
+          </button>
+
+          <button
+            onClick={downloadBaselineCSV}
+            disabled={baselineSessions.length === 0}
+            className={`w-full text-left p-4 rounded-lg transition-all ${
+              baselineSessions.length > 0
+                ? 'bg-slate-50 hover:bg-slate-100 border-2 border-slate-300'
+                : 'bg-gray-100 border-2 border-gray-200 cursor-not-allowed opacity-50'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-gray-800">🧪 Baseline Data (CSV)</div>
+                <div className="text-sm text-gray-600">Download baseline-only sessions (no prompts, no timer)</div>
               </div>
               <div className="text-2xl">→</div>
             </div>

@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'export', // Enable static HTML export for GitHub Pages
-  basePath: '/ctd-sight-word-app', // Replace with your repo name
+  basePath: process.env.NODE_ENV === 'production' ? '/ctd-sight-word-app' : '', // basePath only for GitHub Pages in production
   images: {
     unoptimized: true, // Required for static export
   },

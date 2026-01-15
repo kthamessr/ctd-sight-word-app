@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import SessionGame from '@/components/SessionGame';
 import HomeScreen from '@/components/HomeScreen';
 import SessionHistory from '@/components/SessionHistory';
@@ -22,60 +22,95 @@ export default function Page() {
   const [totalWordsLearned, setTotalWordsLearned] = useState(0);
   const [targetWords, setTargetWords] = useState<string[]>([]);
   const [surveyResponses, setSurveyResponses] = useState<SurveyResponses[]>([]);
+  const [baselineSessions, setBaselineSessions] = useState<SessionData[]>([]);
+  const [baselineMode, setBaselineMode] = useState(false);
 
-  const storageKey = (name: string) => `${participantId || 'default'}::${name}`;
+  const storageKey = useCallback((name: string) => `${participantId || 'default'}::${name}`,[participantId]);
 
   // Load participant-specific data
   useEffect(() => {
     const savedSessions = localStorage.getItem(storageKey('sightWordsSessions'));
+    const savedBaseline = localStorage.getItem(storageKey('baselineSessions'));
     const savedWords = localStorage.getItem(storageKey('targetWords'));
     const savedSurveys = localStorage.getItem(storageKey('socialValiditySurveys'));
     
+    let loadedSessions: SessionData[] = [];
+    let loadedSessionNumber = 1;
+    let loadedTotalScore = 0;
+    let loadedTotalWordsLearned = 0;
+
     if (savedSessions) {
       try {
-        const loadedSessions = JSON.parse(savedSessions);
-        setSessions(loadedSessions);
-        setSessionNumber(loadedSessions.length + 1);
-        setTotalScore(loadedSessions.reduce((sum: number, s: SessionData) => sum + s.correctAnswers * 10, 0));
-        setTotalWordsLearned(loadedSessions.reduce((sum: number, s: SessionData) => sum + s.totalQuestions, 0));
+        loadedSessions = JSON.parse(savedSessions);
+        loadedSessionNumber = loadedSessions.length + 1;
+        loadedTotalScore = loadedSessions.reduce((sum: number, s: SessionData) => sum + s.correctAnswers * 10, 0);
+        loadedTotalWordsLearned = loadedSessions.reduce((sum: number, s: SessionData) => sum + s.totalQuestions, 0);
       } catch (e) {
         console.error('Failed to load sessions:', e);
       }
-    } else {
-      setSessions([]);
-      setSessionNumber(1);
-      setTotalScore(0);
-      setTotalWordsLearned(0);
     }
-    
+
+    let loadedWords: string[] = [];
     if (savedWords) {
       try {
-        setTargetWords(JSON.parse(savedWords));
+        loadedWords = JSON.parse(savedWords);
       } catch (e) {
         console.error('Failed to load target words:', e);
       }
-    } else {
-      setTargetWords([]);
     }
-    
+
+    let loadedBaseline: SessionData[] = [];
+    if (savedBaseline) {
+      try {
+        loadedBaseline = JSON.parse(savedBaseline);
+      } catch (e) {
+        console.error('Failed to load baseline sessions:', e);
+      }
+    }
+
+    let loadedSurveys: SurveyResponses[] = [];
     if (savedSurveys) {
       try {
-        setSurveyResponses(JSON.parse(savedSurveys));
+        loadedSurveys = JSON.parse(savedSurveys);
       } catch (e) {
         console.error('Failed to load surveys:', e);
       }
-    } else {
-      setSurveyResponses([]);
     }
-  }, [participantId]);
+
+    Promise.resolve().then(() => {
+      setSessions(loadedSessions);
+      setSessionNumber(loadedSessionNumber);
+      setTotalScore(loadedTotalScore);
+      setTotalWordsLearned(loadedTotalWordsLearned);
+      setTargetWords(loadedWords);
+      setBaselineSessions(loadedBaseline);
+      setSurveyResponses(loadedSurveys);
+    });
+  }, [storageKey]);
 
   const handleStartGame = (selectedLevel: number) => {
+    setBaselineMode(false);
     if (selectedLevel === 0 && targetWords.length < 10) {
       alert('Please set up at least 10 target words first!');
       setGameState('wordManager');
       return;
     }
     setLevel(selectedLevel);
+    // Intervention sessions always start at the current intervention count (baseline does not advance it)
+    setSessionNumber(sessions.length + 1 || 1);
+    setGameState('playing');
+  };
+
+  const handleStartBaseline = () => {
+    if (targetWords.length < 10) {
+      alert('Please set up at least 10 target words first!');
+      setGameState('wordManager');
+      return;
+    }
+    setBaselineMode(true);
+    setLevel(0);
+    // Baseline session numbering is tracked separately
+    setSessionNumber((baselineSessions.length || 0) + 1);
     setGameState('playing');
   };
 
@@ -86,6 +121,17 @@ export default function Page() {
     responsesTimes: number[];
     wordsAsked: string[];
   }) => {
+    // Baseline runs are recorded separately and do not advance intervention session count
+    if (baselineMode) {
+      const baselineEntry = createSessionData(sessionNumber, result.correct, result.total, result.responsesTimes, result.wordsAsked, 'baseline');
+      const updatedBaseline = [...baselineSessions, baselineEntry];
+      localStorage.setItem(storageKey('baselineSessions'), JSON.stringify(updatedBaseline));
+      setBaselineSessions(updatedBaseline);
+      setBaselineMode(false);
+      setGameState('history');
+      return;
+    }
+
     const newSession = createSessionData(sessionNumber, result.correct, result.total, result.responsesTimes, result.wordsAsked);
     const updatedSessions = [...sessions, newSession];
 
@@ -100,6 +146,7 @@ export default function Page() {
   };
 
   const handlePlayAgain = () => {
+    setBaselineMode(false);
     setGameState('home');
   };
 
@@ -155,9 +202,16 @@ export default function Page() {
 
         {/* Main Content */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} participantId={participantId} />}
+          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} onStartBaseline={handleStartBaseline} participantId={participantId} />}
           {gameState === 'playing' && (
-            <SessionGame level={level} sessionNumber={sessionNumber} onGameComplete={handleGameComplete} onCancel={() => setGameState('history')} targetWords={level === 0 ? targetWords : undefined} />
+            <SessionGame
+              level={level}
+              sessionNumber={sessionNumber}
+              onGameComplete={handleGameComplete}
+              onCancel={() => setGameState('history')}
+              targetWords={level === 0 ? targetWords : undefined}
+              baselineMode={baselineMode}
+            />
           )}
           {gameState === 'history' && <SessionHistory sessions={sessions} onNewSession={handlePlayAgain} onExportData={() => setGameState('export')} />}
           {gameState === 'wordManager' && <WordListManager currentWords={targetWords} onSave={handleSaveWords} onCancel={() => setGameState('home')} />}

@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 interface HomeScreenProps {
   onStartGame: (level: number) => void;
   participantId: string;
+  onStartBaseline: () => void;
 }
 
-export default function HomeScreen({ onStartGame, participantId }: HomeScreenProps) {
+export default function HomeScreen({ onStartGame, participantId, onStartBaseline }: HomeScreenProps) {
   const [hasTargetWords, setHasTargetWords] = useState(false);
 
   useEffect(() => {
@@ -69,6 +70,21 @@ export default function HomeScreen({ onStartGame, participantId }: HomeScreenPro
               <div className="text-4xl mb-2">🎯</div>
               <div className="text-lg">Targeted Words</div>
               <div className="text-sm opacity-90">Custom Words</div>
+            </button>
+
+            {/* Baseline Mode */}
+            <button
+              onClick={onStartBaseline}
+              disabled={!hasTargetWords}
+              className={`w-full font-bold py-6 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg text-white ${
+                hasTargetWords
+                  ? 'bg-gradient-to-b from-slate-500 to-slate-700 hover:from-slate-600 hover:to-slate-800 cursor-pointer'
+                  : 'bg-gray-300 cursor-not-allowed opacity-50'
+              }`}
+            >
+              <div className="text-3xl mb-1">🧪</div>
+              <div className="text-lg">Baseline Mode</div>
+              <div className="text-xs opacity-90">No prompts · No timer</div>
             </button>
 
             {!hasTargetWords && (
