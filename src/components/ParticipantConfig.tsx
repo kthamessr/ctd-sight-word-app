@@ -38,21 +38,17 @@ export default function ParticipantConfig({ participantId, onSave, currentInfo }
           <label className="block text-lg font-semibold text-gray-700 mb-4">
             Current Grade Level
           </label>
-          <div className="grid grid-cols-4 gap-3">
+          <select
+            value={gradeLevel}
+            onChange={(e) => setGradeLevel(Number(e.target.value))}
+            className="w-full px-4 py-3 text-lg font-semibold border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none bg-white"
+          >
             {[5, 6, 7, 8].map((grade) => (
-              <button
-                key={grade}
-                onClick={() => setGradeLevel(grade)}
-                className={`py-4 px-6 rounded-lg font-bold text-xl transition-all transform hover:scale-105 ${
-                  gradeLevel === grade
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-blue-200'
-                }`}
-              >
+              <option key={grade} value={grade}>
                 Grade {grade}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
         {/* Reading Level Selection */}
@@ -60,36 +56,17 @@ export default function ParticipantConfig({ participantId, onSave, currentInfo }
           <label className="block text-lg font-semibold text-gray-700 mb-4">
             Reading Level
           </label>
-          <div className="grid grid-cols-4 gap-3 mb-2">
-            {[1, 2, 3, 4].map((level) => (
-              <button
-                key={level}
-                onClick={() => setReadingLevel(level)}
-                className={`py-4 px-6 rounded-lg font-bold text-xl transition-all transform hover:scale-105 ${
-                  readingLevel === level
-                    ? 'bg-green-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-green-200'
-                }`}
-              >
+          <select
+            value={readingLevel}
+            onChange={(e) => setReadingLevel(Number(e.target.value))}
+            className="w-full px-4 py-3 text-lg font-semibold border-2 border-green-300 rounded-lg focus:border-green-500 focus:outline-none bg-white"
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((level) => (
+              <option key={level} value={level}>
                 Level {level}
-              </button>
+              </option>
             ))}
-          </div>
-          <div className="grid grid-cols-4 gap-3">
-            {[5, 6, 7, 8].map((level) => (
-              <button
-                key={level}
-                onClick={() => setReadingLevel(level)}
-                className={`py-4 px-6 rounded-lg font-bold text-xl transition-all transform hover:scale-105 ${
-                  readingLevel === level
-                    ? 'bg-green-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-green-200'
-                }`}
-              >
-                Level {level}
-              </button>
-            ))}
-          </div>
+          </select>
         </div>
 
         {/* Configuration Summary */}
