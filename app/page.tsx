@@ -14,7 +14,8 @@ import { createSessionData, SessionData } from '@/components/sessionUtils';
 
 export default function Page() {
   const [participantId, setParticipantId] = useState('P1');
-  const [participantInput, setParticipantInput] = useState('P1');
+  const [participantInput, setParticipantInput] = useState('');
+  const [existingParticipants, setExistingParticipants] = useState<string[]>([]);
   const [participantInfo, setParticipantInfo] = useState<ParticipantInfo | null>(null);
   const [gameState, setGameState] = useState<'config' | 'home' | 'playing' | 'history' | 'wordManager' | 'survey' | 'export'>('config');
   const [sessionNumber, setSessionNumber] = useState(1);
@@ -28,6 +29,20 @@ export default function Page() {
   const [baselineMode, setBaselineMode] = useState(false);
 
   const storageKey = useCallback((name: string) => `${participantId || 'default'}::${name}`,[participantId]);
+
+  // Load list of all participants
+  useEffect(() => {
+    const allParticipants = localStorage.getItem('allParticipants');
+    if (allParticipants) {
+      try {
+        Promise.resolve().then(() => {
+          setExistingParticipants(JSON.parse(allParticipants));
+        });
+      } catch (e) {
+        console.error('Failed to load participants list:', e);
+      }
+    }
+  }, []);
 
   // Load participant-specific data
   useEffect(() => {
@@ -111,6 +126,14 @@ export default function Page() {
   const handleSaveParticipantConfig = (info: ParticipantInfo) => {
     localStorage.setItem(storageKey('participantConfig'), JSON.stringify(info));
     setParticipantInfo(info);
+    
+    // Add to existing participants list if not already there
+    if (!existingParticipants.includes(participantId)) {
+      const updatedParticipants = [...existingParticipants, participantId];
+      setExistingParticipants(updatedParticipants);
+      localStorage.setItem('allParticipants', JSON.stringify(updatedParticipants));
+    }
+    
     setGameState('home');
   };
 
@@ -218,21 +241,46 @@ export default function Page() {
         </div>
 
         {/* Participant Switcher */}
-        <div className="bg-white/80 rounded-xl shadow-lg p-4 mb-6 flex flex-col md:flex-row items-center gap-3 justify-between">
-          <div className="text-sm font-semibold text-gray-700">Current Participant: <span className="text-purple-700">{participantId}</span></div>
-          <div className="flex gap-2 items-center w-full md:w-auto">
-            <input
-              value={participantInput}
-              onChange={(e) => setParticipantInput(e.target.value.trim())}
-              placeholder="Enter participant ID"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full md:w-48"
-            />
-            <button
-              onClick={() => setParticipantId(participantInput || 'default')}
-              className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold px-4 py-2 rounded-lg"
-            >
-              Switch
-            </button>
+        <div className="bg-white/80 rounded-xl shadow-lg p-4 mb-6">
+          <div className="flex flex-col md:flex-row items-center gap-4 justify-between">
+            <div className="text-sm font-semibold text-gray-700">
+              Current Participant: <span className="text-purple-700">{participantId}</span>
+            </div>
+            <div className="flex gap-2 items-center w-full md:w-auto">
+              {/* Existing Participants Dropdown */}
+              {existingParticipants.length > 0 && (
+                <select
+                  value={participantId}
+                  onChange={(e) => setParticipantId(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 md:flex-none"
+                >
+                  {existingParticipants.map((pid) => (
+                    <option key={pid} value={pid}>
+                      {pid}
+                    </option>
+                  ))}
+                </select>
+              )}
+              
+              {/* New Participant Input */}
+              <input
+                value={participantInput}
+                onChange={(e) => setParticipantInput(e.target.value.trim())}
+                placeholder="New participant ID"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 md:flex-none"
+              />
+              <button
+                onClick={() => {
+                  if (participantInput.trim()) {
+                    setParticipantId(participantInput);
+                    setParticipantInput('');
+                  }
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold px-4 py-2 rounded-lg whitespace-nowrap"
+              >
+                New Profile
+              </button>
+            </div>
           </div>
         </div>
 
