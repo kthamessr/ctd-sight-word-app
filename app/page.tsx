@@ -6,6 +6,7 @@ import HomeScreen from '@/components/HomeScreen';
 import SessionHistory from '@/components/SessionHistory';
 import ProgressTracker from '@/components/ProgressTracker';
 import WordListManager from '@/components/WordListManager';
+import ParticipantConfig, { ParticipantInfo } from '@/components/ParticipantConfig';
 import SocialValiditySurvey, { SurveyResponses } from '@/components/SocialValiditySurvey';
 import DataExport from '@/components/DataExport';
 import Logo from '@/components/Logo';
@@ -14,7 +15,8 @@ import { createSessionData, SessionData } from '@/components/sessionUtils';
 export default function Page() {
   const [participantId, setParticipantId] = useState('P1');
   const [participantInput, setParticipantInput] = useState('P1');
-  const [gameState, setGameState] = useState<'home' | 'playing' | 'history' | 'wordManager' | 'survey' | 'export'>('home');
+  const [participantInfo, setParticipantInfo] = useState<ParticipantInfo | null>(null);
+  const [gameState, setGameState] = useState<'config' | 'home' | 'playing' | 'history' | 'wordManager' | 'survey' | 'export'>('config');
   const [sessionNumber, setSessionNumber] = useState(1);
   const [level, setLevel] = useState(1);
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -33,6 +35,7 @@ export default function Page() {
     const savedBaseline = localStorage.getItem(storageKey('baselineSessions'));
     const savedWords = localStorage.getItem(storageKey('targetWords'));
     const savedSurveys = localStorage.getItem(storageKey('socialValiditySurveys'));
+    const savedConfig = localStorage.getItem(storageKey('participantConfig'));
     
     let loadedSessions: SessionData[] = [];
     let loadedSessionNumber = 1;
@@ -77,6 +80,15 @@ export default function Page() {
       }
     }
 
+    let loadedConfig: ParticipantInfo | null = null;
+    if (savedConfig) {
+      try {
+        loadedConfig = JSON.parse(savedConfig);
+      } catch (e) {
+        console.error('Failed to load participant config:', e);
+      }
+    }
+
     Promise.resolve().then(() => {
       setSessions(loadedSessions);
       setSessionNumber(loadedSessionNumber);
@@ -85,8 +97,33 @@ export default function Page() {
       setTargetWords(loadedWords);
       setBaselineSessions(loadedBaseline);
       setSurveyResponses(loadedSurveys);
+      setParticipantInfo(loadedConfig);
+      
+      // If no config exists, show config screen; otherwise show home
+      if (loadedConfig) {
+        setGameState('home');
+      } else {
+        setGameState('config');
+      }
     });
   }, [storageKey]);
+
+  const handleSaveParticipantConfig = (info: ParticipantInfo) => {
+    localStorage.setItem(storageKey('participantConfig'), JSON.stringify(info));
+    setParticipantInfo(info);
+    setGameState('home');
+  };
+
+  const getActualLevel = (selectedLevel: number): number => {
+    if (!participantInfo || selectedLevel === 0) return selectedLevel;
+    
+    // Level 1 = reading level, Level 3 = grade level, Level 2 = halfway between
+    if (selectedLevel === 1) return participantInfo.readingLevel;
+    if (selectedLevel === 2) return Math.floor((participantInfo.readingLevel + participantInfo.gradeLevel) / 2);
+    if (selectedLevel === 3) return participantInfo.gradeLevel;
+    
+    return selectedLevel;
+  };
 
   const handleStartGame = (selectedLevel: number) => {
     setBaselineMode(false);
@@ -95,7 +132,9 @@ export default function Page() {
       setGameState('wordManager');
       return;
     }
-    setLevel(selectedLevel);
+    
+    const actualLevel = getActualLevel(selectedLevel);
+    setLevel(actualLevel);
     // Intervention sessions always start at the current intervention count (baseline does not advance it)
     setSessionNumber(sessions.length + 1 || 1);
     setGameState('playing');
@@ -202,6 +241,7 @@ export default function Page() {
 
         {/* Main Content */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
+          {gameState === 'config' && <ParticipantConfig participantId={participantId} onSave={handleSaveParticipantConfig} currentInfo={participantInfo || undefined} />}
           {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} onStartBaseline={handleStartBaseline} participantId={participantId} />}
           {gameState === 'playing' && (
             <SessionGame
@@ -222,6 +262,17 @@ export default function Page() {
         {/* Quick Action Buttons */}
         {gameState === 'home' && (
           <div className="flex gap-4 justify-center mb-8 flex-wrap">
+            <button
+              onClick={() => setGameState('config')}
+              className="bg-white hover:bg-gray-50 text-blue-600 font-bold py-3 px-6 rounded-lg shadow-lg transition-all border-2 border-blue-300"
+            >
+              ⚙️ Participant Setup
+              {participantInfo && (
+                <span className="text-xs block mt-1">
+                  Grade {participantInfo.gradeLevel} · Reading Lvl {participantInfo.readingLevel}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setGameState('wordManager')}
               className="bg-white hover:bg-gray-50 text-purple-600 font-bold py-3 px-6 rounded-lg shadow-lg transition-all border-2 border-purple-300"

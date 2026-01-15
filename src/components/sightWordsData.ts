@@ -10,6 +10,26 @@ const sightWordsData = {
   3: [
     'who', 'oil', 'use', 'two', 'how', 'its', 'said', 'each', 'which', 'she',
     'do', 'an', 'all', 'into', 'could', 'year', 'your', 'work', 'first', 'made'
+  ],
+  4: [
+    'when', 'them', 'many', 'some', 'these', 'would', 'other', 'than', 'then', 'now',
+    'look', 'only', 'come', 'over', 'also', 'back', 'after', 'use', 'two', 'way'
+  ],
+  5: [
+    'because', 'through', 'before', 'around', 'another', 'while', 'should', 'between', 'always', 'every',
+    'under', 'never', 'being', 'often', 'both', 'once', 'where', 'right', 'own', 'might'
+  ],
+  6: [
+    'although', 'however', 'whether', 'among', 'during', 'several', 'therefore', 'toward', 'without', 'within',
+    'against', 'beneath', 'beyond', 'despite', 'except', 'throughout', 'underneath', 'alongside', 'besides', 'meanwhile'
+  ],
+  7: [
+    'consequently', 'furthermore', 'nevertheless', 'accordingly', 'alternatively', 'subsequently', 'simultaneously', 'particularly', 'specifically', 'essentially',
+    'approximately', 'immediately', 'significantly', 'individually', 'collectively', 'temporarily', 'permanently', 'originally', 'primarily', 'relatively'
+  ],
+  8: [
+    'notwithstanding', 'correspondingly', 'predominantly', 'extraordinarily', 'comprehensively', 'substantially', 'systematically', 'theoretically', 'fundamentally', 'considerably',
+    'dramatically', 'increasingly', 'respectively', 'traditionally', 'universally', 'proportionally', 'substantially', 'exceptionally', 'remarkably', 'understandably'
   ]
 };
 
