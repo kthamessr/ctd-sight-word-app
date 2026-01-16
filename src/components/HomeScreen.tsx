@@ -6,9 +6,10 @@ interface HomeScreenProps {
   onStartGame: (level: number) => void;
   participantId: string;
   onStartBaseline: () => void;
+  onViewHistory?: () => void;
 }
 
-export default function HomeScreen({ onStartGame, participantId, onStartBaseline }: HomeScreenProps) {
+export default function HomeScreen({ onStartGame, participantId, onStartBaseline, onViewHistory }: HomeScreenProps) {
   const [hasTargetWords, setHasTargetWords] = useState(false);
 
   useEffect(() => {
@@ -117,6 +118,18 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
           </div>
           </div>
         </div>
+
+        {/* View Score Card Button */}
+        {onViewHistory && (
+          <div className="mt-8 text-center">
+            <button
+              onClick={onViewHistory}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+            >
+              📊 View Score Card
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

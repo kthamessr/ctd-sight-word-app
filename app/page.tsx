@@ -293,7 +293,7 @@ export default function Page() {
         {/* Main Content */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
           {gameState === 'config' && <ParticipantConfig participantId={participantId} onSave={handleSaveParticipantConfig} currentInfo={participantInfo || undefined} />}
-          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} onStartBaseline={handleStartBaseline} participantId={participantId} />}
+          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} onStartBaseline={handleStartBaseline} participantId={participantId} onViewHistory={() => setGameState('history')} />}
           {gameState === 'playing' && (
             <SessionGame
               level={level}
