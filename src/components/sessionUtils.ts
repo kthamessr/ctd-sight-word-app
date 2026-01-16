@@ -78,14 +78,21 @@ export function calculateMasteryPerLevel(sessions: SessionData[], level: number)
   // Filter unprompted sessions (constant time delay) for this level
   const unpromptedSessions = levelSessions.filter(s => s.promptType === 'delay');
   
-  if (unpromptedSessions.length === 0) return false;
-  
-  // Calculate accuracy for last 3 unprompted sessions
-  const recentUnprompted = unpromptedSessions.slice(-3);
-  const avgAccuracy = recentUnprompted.reduce((sum, s) => sum + s.accuracy, 0) / recentUnprompted.length;
-  
-  // Mastery when unprompted accuracy >= 80% across last 3 sessions OR 90% on last session
-  return avgAccuracy >= 80 || unpromptedSessions[unpromptedSessions.length - 1].accuracy >= 90;
+  // Mastery criteria:
+  // - Two consecutive unprompted sessions >= 90%
+  // - OR average >= 80% over the last three consecutive unprompted sessions
+  if (unpromptedSessions.length < 2) return false;
+
+  const lastIdx = unpromptedSessions.length - 1;
+  const lastTwo90 = unpromptedSessions.length >= 2 &&
+    unpromptedSessions[lastIdx].accuracy >= 90 &&
+    unpromptedSessions[lastIdx - 1].accuracy >= 90;
+
+  const lastThreeAvg80 = unpromptedSessions.length >= 3 && (
+    unpromptedSessions.slice(-3).reduce((sum, s) => sum + s.accuracy, 0) / 3
+  ) >= 80;
+
+  return lastTwo90 || lastThreeAvg80;
 }
 
 export function calculateMastery(sessions: SessionData[]): { 
@@ -121,12 +128,19 @@ export function calculateMastery(sessions: SessionData[]): {
     ? unpromptedSessions.slice(-3).reduce((sum, s) => sum + s.accuracy, 0) / Math.min(unpromptedSessions.length, 3)
     : 0;
 
-  // Mastery achieved when unprompted (independent) performance reaches 80% across last 3 sessions
-  // or 90% on last unprompted session
-  const unpromptedMastery = unpromptedSessions.length > 0 && (
-    unpromptedAccuracy >= 80 || 
-    unpromptedSessions[unpromptedSessions.length - 1].accuracy >= 90
-  );
+  // Mastery achieved when:
+  // - Two consecutive unprompted sessions >= 90%
+  // - OR average >= 80% over the last three consecutive unprompted sessions
+  const lastIdx = unpromptedSessions.length - 1;
+  const lastTwo90 = unpromptedSessions.length >= 2 &&
+    unpromptedSessions[lastIdx].accuracy >= 90 &&
+    unpromptedSessions[lastIdx - 1].accuracy >= 90;
+
+  const lastThreeAvg80 = unpromptedSessions.length >= 3 && (
+    unpromptedSessions.slice(-3).reduce((sum, s) => sum + s.accuracy, 0) / 3
+  ) >= 80;
+
+  const unpromptedMastery = lastTwo90 || lastThreeAvg80;
 
   return {
     achieved: unpromptedMastery,

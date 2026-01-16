@@ -35,8 +35,8 @@ export default function SessionHistory({ sessions, onNewSession, onExportData }:
         <div className="text-2xl font-bold">{mastery.achieved ? '🏆 Achieved' : '📈 In Progress'}</div>
         <div className="text-sm mt-2 opacity-90">
           {mastery.achieved 
-            ? '80%+ accuracy achieved across last 3 unprompted sessions'
-            : `Current: ${mastery.unpromptedAccuracy.toFixed(1)}% - Target: 80%`
+            ? 'Achieved: two consecutive unprompted sessions ≥90% or average ≥80% over last three unprompted sessions'
+            : `Current (avg last 3): ${mastery.unpromptedAccuracy.toFixed(1)}% — Target: two consecutive ≥90% or avg ≥80% over last 3`
           }
         </div>
       </div>

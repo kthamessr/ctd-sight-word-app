@@ -162,10 +162,6 @@ export default function Page() {
     
     const actualLevel = getActualLevel(selectedLevel);
     setLevel(actualLevel);
-    // Use the level-specific session number
-    const levelSessionNum = levelSessionNumbers[actualLevel] || 1;
-    // Pass sessionNumber via a ref or directly - we'll use a temporary variable approach
-    // Actually, we need to pass this to SessionGame, so we'll create a custom session number state
     setGameState('playing');
   };
 
@@ -178,7 +174,6 @@ export default function Page() {
     setBaselineMode(true);
     setLevel(0);
     // Baseline session numbering is tracked separately
-    setSessionNumber((baselineSessions.length || 0) + 1);
     setGameState('playing');
   };
 
