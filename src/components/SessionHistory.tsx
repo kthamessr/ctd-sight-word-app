@@ -51,22 +51,24 @@ export default function SessionHistory({ sessions, onNewSession, onExportData }:
                   <th className="px-4 py-3 text-left text-sm font-semibold">Session</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Correct</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Assisted</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">No Answer</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Accuracy</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Prompt Type</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Avg Response Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {sessions.map((session, index) => {
                   const promptType = session.promptType === 'immediate' ? 'Immediate Prompt' : 'Constant Time Delay';
                   const promptIcon = session.promptType === 'immediate' ? '⚡' : '⏱️';
-                  const avgResponseTime = (session.timeToRespond.reduce((a: number, b: number) => a + b, 0) / session.timeToRespond.length).toFixed(2);
 
                   return (
                     <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="px-4 py-3 font-bold text-purple-600">{session.sessionNumber}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">{new Date(session.date).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 font-semibold">{session.correctAnswers}/{session.totalQuestions}</td>
+                      <td className="px-4 py-3 font-semibold text-green-700">{session.correctAnswers}</td>
+                      <td className="px-4 py-3 font-semibold text-blue-700">{session.assistedAnswers}</td>
+                      <td className="px-4 py-3 font-semibold text-red-700">{session.noAnswers}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-bold ${
@@ -79,7 +81,6 @@ export default function SessionHistory({ sessions, onNewSession, onExportData }:
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {promptIcon} {promptType}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{avgResponseTime}s</td>
                     </tr>
                   );
                 })}

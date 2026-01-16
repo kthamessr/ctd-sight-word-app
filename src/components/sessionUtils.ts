@@ -4,10 +4,13 @@ export interface SessionData {
   sessionNumber: number;
   date: string;
   correctAnswers: number;
+  assistedAnswers: number;
+  noAnswers: number;
   totalQuestions: number;
   accuracy: number;
   timeToRespond: number[];
   wordsAsked: string[];
+  responseTypes: ('correct' | 'assisted' | 'no-answer')[]; // Track response type for each question
   phase?: 'baseline' | 'intervention';
   promptType?: 'immediate' | 'delay'; // Track whether immediate prompt or constant time delay
 }
@@ -39,9 +42,12 @@ export function playAudioPrompt(word: string) {
 export function createSessionData(
   sessionNumber: number,
   correct: number,
+  assisted: number,
+  noAnswer: number,
   total: number,
   responsesTimes: number[],
   wordsAsked: string[],
+  responseTypes: ('correct' | 'assisted' | 'no-answer')[],
   phase: 'baseline' | 'intervention' = 'intervention'
 ): SessionData {
   const promptConfig = getPromptConfig(sessionNumber);
@@ -49,10 +55,13 @@ export function createSessionData(
     sessionNumber,
     date: new Date().toISOString(),
     correctAnswers: correct,
+    assistedAnswers: assisted,
+    noAnswers: noAnswer,
     totalQuestions: total,
-    accuracy: (correct / total) * 100,
+    accuracy: ((correct + assisted) / total) * 100, // Accuracy includes both correct and assisted
     timeToRespond: responsesTimes,
     wordsAsked,
+    responseTypes,
     phase,
     promptType: promptConfig.immediate ? 'immediate' : 'delay',
   };

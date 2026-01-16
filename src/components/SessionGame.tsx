@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getPromptConfig, playAudioPrompt } from './sessionUtils';
-import { playCorrectChime, playIncorrectSound } from './audioUtils';
+import { playCorrectChime } from './audioUtils';
 import { getRandomWords } from './sightWordsData';
 
 interface GameProps {
@@ -12,10 +12,13 @@ interface GameProps {
   baselineMode?: boolean;
   onGameComplete: (result: {
     correct: number;
+    assisted: number;
+    noAnswer: number;
     total: number;
     newStreak: number;
     responsesTimes: number[];
     wordsAsked: string[];
+    responseTypes: ('correct' | 'assisted' | 'no-answer')[];
   }) => void;
   onCancel: () => void;
 }
@@ -30,12 +33,16 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [correct, setCorrect] = useState(0);
+  const [assisted, setAssisted] = useState(0);
+  const [noAnswer, setNoAnswer] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(10);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [responsesTimes, setResponsesTimes] = useState<number[]>([]);
+  const [responseTypes, setResponseTypes] = useState<('correct' | 'assisted' | 'no-answer')[]>([]);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showTryAgain, setShowTryAgain] = useState(false);
   
   // Get prompt configuration based on session number
   const promptConfig = getPromptConfig(sessionNumber);
@@ -117,9 +124,13 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
           setSelectedAnswer(null); // No answer selected
           setIsTimerRunning(false);
           const newResponsesTimes = [...responsesTimes, 10];
+          const newResponseTypes = [...responseTypes, 'no-answer'] as ('correct' | 'assisted' | 'no-answer')[];
+          const newNoAnswer = noAnswer + 1;
           setResponsesTimes(newResponsesTimes);
+          setResponseTypes(newResponseTypes);
+          setNoAnswer(newNoAnswer);
           
-          // Auto-advance after showing incorrect feedback
+          // Auto-advance after showing no answer feedback
           setTimeout(() => {
             if (currentQuestion + 1 < questions.length) {
               setCurrentQuestion(currentQuestion + 1);
@@ -131,7 +142,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
               setPromptDelayRemaining(promptConfig.delay);
             } else {
               const wordsAsked = questions.map((q) => q.word);
-              onGameComplete({ correct, total: questions.length, newStreak: correct === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked });
+              onGameComplete({ correct, assisted, noAnswer, total: questions.length, newStreak: correct === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked, responseTypes });
             }
           }, 2000);
           
@@ -142,7 +153,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [timeLeft, isTimerRunning, answered, questions, responsesTimes, currentQuestion, correct, promptConfig.delay, onGameComplete, showPrompt, baselineMode]);
+  }, [timeLeft, isTimerRunning, answered, questions, responsesTimes, currentQuestion, correct, assisted, promptConfig.delay, onGameComplete, showPrompt, baselineMode, responseTypes, noAnswer]);
 
   if (questions.length === 0) {
     return <div className="text-center text-gray-600">Loading questions...</div>;
@@ -154,41 +165,54 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
   const handleAnswer = (answer: string) => {
     if (answered) return;
 
-    setSelectedAnswer(answer);
-    setAnswered(true);
-    setIsTimerRunning(false);
-    const responseSeconds = baselineMode ? 0 : 10 - timeLeft;
-    const newResponsesTimes = [...responsesTimes, responseSeconds];
-    setResponsesTimes(newResponsesTimes);
-
     const isCorrectAnswer = answer === currentWord;
-    const newCorrect = isCorrectAnswer ? correct + 1 : correct;
-    
-    if (isCorrectAnswer) {
-      setCorrect(newCorrect);
-      playCorrectChime();
-    } else {
-      playIncorrectSound();
-    }
 
-    // Auto-advance after 2 seconds with updated values
-    setTimeout(() => {
-      if (currentQuestion + 1 < questions.length) {
-        setCurrentQuestion(currentQuestion + 1);
-        setAnswered(false);
-        setSelectedAnswer(null);
-        setTimeLeft(10);
-        setIsTimerRunning(true);
-        setShowPrompt(false);
-        setPromptDelayRemaining(promptConfig.delay);
+    if (isCorrectAnswer) {
+      setSelectedAnswer(answer);
+      setAnswered(true);
+      setIsTimerRunning(false);
+      const responseSeconds = baselineMode ? 0 : 10 - timeLeft;
+      const newResponsesTimes = [...responsesTimes, responseSeconds];
+      setResponsesTimes(newResponsesTimes);
+      
+      // Determine if correct or assisted based on prompt visibility
+      const isAssisted = showPrompt;
+      const newResponseType: 'correct' | 'assisted' = isAssisted ? 'assisted' : 'correct';
+      const newResponseTypes = [...responseTypes, newResponseType] as ('correct' | 'assisted' | 'no-answer')[];
+      setResponseTypes(newResponseTypes);
+      
+      if (isAssisted) {
+        setAssisted(assisted + 1);
       } else {
-        const wordsAsked = questions.map((q) => q.word);
-        onGameComplete({ correct: newCorrect, total: questions.length, newStreak: newCorrect === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked });
+        setCorrect(correct + 1);
       }
-    }, 2000);
+      
+      playCorrectChime();
+
+      // Auto-advance after 2 seconds with updated values
+      setTimeout(() => {
+        if (currentQuestion + 1 < questions.length) {
+          setCurrentQuestion(currentQuestion + 1);
+          setAnswered(false);
+          setSelectedAnswer(null);
+          setTimeLeft(10);
+          setIsTimerRunning(true);
+          setShowPrompt(false);
+          setPromptDelayRemaining(promptConfig.delay);
+        } else {
+          const wordsAsked = questions.map((q) => q.word);
+          const totalCorrect = (isAssisted ? correct : correct + 1);
+          const totalAssisted = isAssisted ? assisted + 1 : assisted;
+          onGameComplete({ correct: totalCorrect, assisted: totalAssisted, noAnswer, total: questions.length, newStreak: totalCorrect === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked, responseTypes: newResponseTypes });
+        }
+      }, 2000);
+    } else {
+      // Wrong answer - show "Try Again"
+      setShowTryAgain(true);
+      setTimeout(() => setShowTryAgain(false), 1500);
+    }
   };
 
-  const isCorrect = selectedAnswer === currentWord;
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   return (
@@ -290,11 +314,18 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
         })}
       </div>
 
+      {/* Try Again Message */}
+      {showTryAgain && (
+        <div className="text-center mb-8 p-4 bg-orange-100 rounded-lg border-2 border-orange-500 max-w-md mx-auto">
+          <p className="text-2xl font-bold text-orange-700">🔄 Try Again</p>
+        </div>
+      )}
+
       {/* Feedback */}
       {answered && (
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">
-            {isCorrect ? '✅ Correct!' : selectedAnswer === null ? '⏱️ Time\'s up!' : '💙 Nice try.'}
+            {showPrompt ? '✅ Correct with prompt!' : '✅ Correct!'}
           </div>
           <p className="text-gray-700">
             The correct answer is: <span className="font-bold text-purple-600">{currentWord}</span>

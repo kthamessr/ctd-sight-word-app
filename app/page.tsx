@@ -178,14 +178,17 @@ export default function Page() {
 
   const handleGameComplete = (result: {
     correct: number;
+    assisted: number;
+    noAnswer: number;
     total: number;
     newStreak: number;
     responsesTimes: number[];
     wordsAsked: string[];
+    responseTypes: ('correct' | 'assisted' | 'no-answer')[];
   }) => {
     // Baseline runs are recorded separately and do not advance intervention session count
     if (baselineMode) {
-      const baselineEntry = createSessionData(sessionNumber, result.correct, result.total, result.responsesTimes, result.wordsAsked, 'baseline');
+      const baselineEntry = createSessionData(sessionNumber, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes, 'baseline');
       const updatedBaseline = [...baselineSessions, baselineEntry];
       localStorage.setItem(storageKey('baselineSessions'), JSON.stringify(updatedBaseline));
       setBaselineSessions(updatedBaseline);
@@ -194,7 +197,7 @@ export default function Page() {
       return;
     }
 
-    const newSession = createSessionData(sessionNumber, result.correct, result.total, result.responsesTimes, result.wordsAsked);
+    const newSession = createSessionData(sessionNumber, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes);
     const updatedSessions = [...sessions, newSession];
 
     // Save to localStorage
@@ -202,7 +205,7 @@ export default function Page() {
 
     setSessions(updatedSessions);
     setSessionNumber(sessionNumber + 1);
-    setTotalScore(totalScore + result.correct * 10);
+    setTotalScore(totalScore + (result.correct + result.assisted) * 10);
     setTotalWordsLearned(totalWordsLearned + result.total);
     setGameState('history');
   };
