@@ -221,9 +221,9 @@ export default function Page() {
     const finalScore = totalScore + sessionPoints;
     setTotalScore(finalScore);
     setShowCoinOverlay({ active: true, amount: sessionPoints });
-        // Animate displayScore count-up to finalScore
-        const startScore = displayScore;
-        const diff = finalScore - startScore;
+    // Animate displayScore count-up to finalScore
+    const startScore = totalScore;
+    const diff = finalScore - startScore;
         const steps = 30;
         const increment = Math.max(1, Math.floor(diff / steps));
         let current = startScore;
