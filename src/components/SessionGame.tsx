@@ -19,6 +19,7 @@ interface GameProps {
     responsesTimes: number[];
     wordsAsked: string[];
     responseTypes: ('correct' | 'assisted' | 'no-answer')[];
+    sessionPoints: number;
   }) => void;
   onCancel: () => void;
 }
@@ -43,6 +44,8 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
   const [responseTypes, setResponseTypes] = useState<('correct' | 'assisted' | 'no-answer')[]>([]);
   const [showPrompt, setShowPrompt] = useState(false);
   const [showTryAgain, setShowTryAgain] = useState(false);
+  const [sessionPoints, setSessionPoints] = useState(0);
+  const [recentGain, setRecentGain] = useState<number | null>(null);
   
   // Get prompt configuration based on session number
   const promptConfig = getPromptConfig(sessionNumber);
@@ -142,7 +145,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
               setPromptDelayRemaining(promptConfig.delay);
             } else {
               const wordsAsked = questions.map((q) => q.word);
-              onGameComplete({ correct, assisted, noAnswer, total: questions.length, newStreak: correct === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked, responseTypes });
+              onGameComplete({ correct, assisted, noAnswer, total: questions.length, newStreak: correct === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked, responseTypes, sessionPoints });
             }
           }, 2000);
           
@@ -153,7 +156,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [timeLeft, isTimerRunning, answered, questions, responsesTimes, currentQuestion, correct, assisted, promptConfig.delay, onGameComplete, showPrompt, baselineMode, responseTypes, noAnswer]);
+  }, [timeLeft, isTimerRunning, answered, questions, responsesTimes, currentQuestion, correct, assisted, promptConfig.delay, onGameComplete, showPrompt, baselineMode, responseTypes, noAnswer, sessionPoints]);
 
   if (questions.length === 0) {
     return <div className="text-center text-gray-600">Loading questions...</div>;
@@ -186,6 +189,12 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
       } else {
         setCorrect(correct + 1);
       }
+
+      // Token accumulation: 5 points for assisted, 10 for unprompted
+      const gain = isAssisted ? 5 : 10;
+      setSessionPoints((prev) => prev + gain);
+      setRecentGain(gain);
+      setTimeout(() => setRecentGain(null), 1000);
       
       playCorrectChime();
 
@@ -203,7 +212,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
           const wordsAsked = questions.map((q) => q.word);
           const totalCorrect = (isAssisted ? correct : correct + 1);
           const totalAssisted = isAssisted ? assisted + 1 : assisted;
-          onGameComplete({ correct: totalCorrect, assisted: totalAssisted, noAnswer, total: questions.length, newStreak: totalCorrect === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked, responseTypes: newResponseTypes });
+          onGameComplete({ correct: totalCorrect, assisted: totalAssisted, noAnswer, total: questions.length, newStreak: totalCorrect === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked, responseTypes: newResponseTypes, sessionPoints });
         }
       }, 2000);
     } else {
@@ -227,6 +236,17 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
             <p className="text-xs text-blue-600">⚡ Immediate audible prompt</p>
           ) : (
             <p className="text-xs text-orange-600">⏱️ 3-second delay before prompt</p>
+          )}
+        </div>
+      </div>
+
+      {/* Session Tokens */}
+      <div className="mb-4 w-full max-w-2xl">
+        <div className="flex items-center justify-center gap-4 bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3">
+          <span className="text-2xl">🪙</span>
+          <span className="text-lg font-bold text-yellow-700">Session Coins: {sessionPoints}</span>
+          {recentGain !== null && (
+            <span className="text-sm font-bold text-green-700 bg-green-100 border border-green-300 rounded-full px-3 py-1 animate-bounce">+{recentGain}</span>
           )}
         </div>
       </div>

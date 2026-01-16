@@ -24,6 +24,8 @@ export default function Page() {
   const [totalWordsLearned, setTotalWordsLearned] = useState(0);
   const [targetWords, setTargetWords] = useState<string[]>([]);
   const [surveyResponses, setSurveyResponses] = useState<SurveyResponses[]>([]);
+  const [displayScore, setDisplayScore] = useState(0);
+  const [showCoinOverlay, setShowCoinOverlay] = useState<{ active: boolean; amount: number } | null>(null);
   const [baselineSessions, setBaselineSessions] = useState<SessionData[]>([]);
   const [baselineMode, setBaselineMode] = useState(false);
   const [levelSessionNumbers, setLevelSessionNumbers] = useState<Record<number, number>>({ 0: 1, 1: 1, 2: 1, 3: 1 }); // Track session number per level
@@ -59,7 +61,7 @@ export default function Page() {
     if (savedSessions) {
       try {
         loadedSessions = JSON.parse(savedSessions);
-        loadedTotalScore = loadedSessions.reduce((sum: number, s: SessionData) => sum + s.correctAnswers * 10, 0);
+        loadedTotalScore = loadedSessions.reduce((sum: number, s: SessionData) => sum + (s.correctAnswers * 10 + (s.assistedAnswers || 0) * 5), 0);
         loadedTotalWordsLearned = loadedSessions.reduce((sum: number, s: SessionData) => sum + s.totalQuestions, 0);
       } catch (e) {
         console.error('Failed to load sessions:', e);
@@ -112,6 +114,7 @@ export default function Page() {
       setSessions(loadedSessions);
       setLevelSessionNumbers(levelSessionNums);
       setTotalScore(loadedTotalScore);
+      setDisplayScore(loadedTotalScore);
       setTotalWordsLearned(loadedTotalWordsLearned);
       setTargetWords(loadedWords);
       setBaselineSessions(loadedBaseline);
@@ -186,6 +189,7 @@ export default function Page() {
     responsesTimes: number[];
     wordsAsked: string[];
     responseTypes: ('correct' | 'assisted' | 'no-answer')[];
+    sessionPoints: number;
   }) => {
     // Baseline runs are recorded separately and do not advance intervention session count
     if (baselineMode) {
@@ -213,6 +217,26 @@ export default function Page() {
     }));
     
     setTotalScore(totalScore + (result.correct + result.assisted) * 10);
+        // Points: 10 per unprompted correct, 5 per assisted
+        const sessionPoints = result.sessionPoints ?? (result.correct * 10 + result.assisted * 5);
+        const finalScore = totalScore + sessionPoints;
+        setTotalScore(finalScore);
+        setShowCoinOverlay({ active: true, amount: sessionPoints });
+        // Animate displayScore count-up to finalScore
+        const startScore = displayScore;
+        const diff = finalScore - startScore;
+        const steps = 30;
+        const increment = Math.max(1, Math.floor(diff / steps));
+        let current = startScore;
+        const timer = setInterval(() => {
+          current += increment;
+          if (current >= finalScore) {
+            current = finalScore;
+            clearInterval(timer);
+            setTimeout(() => setShowCoinOverlay(null), 400);
+          }
+          setDisplayScore(current);
+        }, 30);
     setTotalWordsLearned(totalWordsLearned + result.total);
     setGameState('history');
   };
@@ -295,7 +319,17 @@ export default function Page() {
         </div>
 
         {/* Stats Bar */}
-        <ProgressTracker score={totalScore} level={level} streak={sessions.length} wordsLearned={totalWordsLearned} />
+        <div className="relative">
+          <ProgressTracker score={displayScore} level={level} streak={sessions.length} wordsLearned={totalWordsLearned} />
+          {showCoinOverlay?.active && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="flex items-center gap-2 bg-yellow-100/90 border border-yellow-300 rounded-xl px-4 py-2 shadow-lg animate-bounce">
+                <span className="text-2xl">🪙🪙🪙</span>
+                <span className="text-lg font-bold text-yellow-700">+{showCoinOverlay.amount}</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Main Content */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
