@@ -95,27 +95,27 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
         </div>
 
         {/* Features */}
-        <div className="mt-10 pt-8 border-t border-gray-200 w-full flex justify-center">
-          <div className="w-full">
-            <h3 className="text-lg font-semibold text-gray-600 mb-6 uppercase text-center">Features</h3>
-            <div className="grid grid-cols-2 gap-6 text-center justify-items-center max-w-2xl mx-auto">
-            <div className="flex flex-col items-center justify-center gap-2 text-center">
-              <span className="text-3xl">📚</span>
-              <span className="text-gray-700 font-medium">Learn sight words</span>
+        <div className="mt-10 pt-8 border-t border-gray-200 w-full">
+          <h3 className="text-lg font-semibold text-gray-600 mb-6 uppercase text-center">Features</h3>
+          <div className="flex justify-center">
+            <div className="grid grid-cols-4 gap-8 text-center max-w-4xl">
+              <div className="flex flex-col items-center justify-center gap-2">
+                <span className="text-3xl">📚</span>
+                <span className="text-gray-700 font-medium">Learn sight words</span>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <span className="text-3xl">🎯</span>
+                <span className="text-gray-700 font-medium">Quiz gameplay</span>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <span className="text-3xl">⭐</span>
+                <span className="text-gray-700 font-medium">Earn points</span>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <span className="text-3xl">🏆</span>
+                <span className="text-gray-700 font-medium">Build streaks</span>
+              </div>
             </div>
-            <div className="flex flex-col items-center justify-center gap-2 text-center">
-              <span className="text-3xl">🎯</span>
-              <span className="text-gray-700 font-medium">Quiz gameplay</span>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-2 text-center">
-              <span className="text-3xl">⭐</span>
-              <span className="text-gray-700 font-medium">Earn points</span>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-2 text-center">
-              <span className="text-3xl">🏆</span>
-              <span className="text-gray-700 font-medium">Build streaks</span>
-            </div>
-          </div>
           </div>
         </div>
 
