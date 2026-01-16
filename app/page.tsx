@@ -18,7 +18,6 @@ export default function Page() {
   const [existingParticipants, setExistingParticipants] = useState<string[]>([]);
   const [participantInfo, setParticipantInfo] = useState<ParticipantInfo | null>(null);
   const [gameState, setGameState] = useState<'config' | 'home' | 'playing' | 'history' | 'wordManager' | 'survey' | 'export'>('config');
-  const [sessionNumber, setSessionNumber] = useState(1);
   const [level, setLevel] = useState(1);
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [totalScore, setTotalScore] = useState(0);
@@ -27,6 +26,7 @@ export default function Page() {
   const [surveyResponses, setSurveyResponses] = useState<SurveyResponses[]>([]);
   const [baselineSessions, setBaselineSessions] = useState<SessionData[]>([]);
   const [baselineMode, setBaselineMode] = useState(false);
+  const [levelSessionNumbers, setLevelSessionNumbers] = useState<Record<number, number>>({ 0: 1, 1: 1, 2: 1, 3: 1 }); // Track session number per level
 
   const storageKey = useCallback((name: string) => `${participantId || 'default'}::${name}`,[participantId]);
 
@@ -53,14 +53,12 @@ export default function Page() {
     const savedConfig = localStorage.getItem(storageKey('participantConfig'));
     
     let loadedSessions: SessionData[] = [];
-    let loadedSessionNumber = 1;
     let loadedTotalScore = 0;
     let loadedTotalWordsLearned = 0;
 
     if (savedSessions) {
       try {
         loadedSessions = JSON.parse(savedSessions);
-        loadedSessionNumber = loadedSessions.length + 1;
         loadedTotalScore = loadedSessions.reduce((sum: number, s: SessionData) => sum + s.correctAnswers * 10, 0);
         loadedTotalWordsLearned = loadedSessions.reduce((sum: number, s: SessionData) => sum + s.totalQuestions, 0);
       } catch (e) {
@@ -104,9 +102,15 @@ export default function Page() {
       }
     }
 
+    // Calculate session numbers per level
+    const levelSessionNums: Record<number, number> = { 0: 1, 1: 1, 2: 1, 3: 1 };
+    loadedSessions.forEach(session => {
+      levelSessionNums[session.level] = (levelSessionNums[session.level] || 1) + 1;
+    });
+
     Promise.resolve().then(() => {
       setSessions(loadedSessions);
-      setSessionNumber(loadedSessionNumber);
+      setLevelSessionNumbers(levelSessionNums);
       setTotalScore(loadedTotalScore);
       setTotalWordsLearned(loadedTotalWordsLearned);
       setTargetWords(loadedWords);
@@ -158,8 +162,10 @@ export default function Page() {
     
     const actualLevel = getActualLevel(selectedLevel);
     setLevel(actualLevel);
-    // Intervention sessions always start at the current intervention count (baseline does not advance it)
-    setSessionNumber(sessions.length + 1 || 1);
+    // Use the level-specific session number
+    const levelSessionNum = levelSessionNumbers[actualLevel] || 1;
+    // Pass sessionNumber via a ref or directly - we'll use a temporary variable approach
+    // Actually, we need to pass this to SessionGame, so we'll create a custom session number state
     setGameState('playing');
   };
 
@@ -188,7 +194,7 @@ export default function Page() {
   }) => {
     // Baseline runs are recorded separately and do not advance intervention session count
     if (baselineMode) {
-      const baselineEntry = createSessionData(sessionNumber, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes, 'baseline', level);
+      const baselineEntry = createSessionData(levelSessionNumbers[level] || 1, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes, 'baseline', level);
       const updatedBaseline = [...baselineSessions, baselineEntry];
       localStorage.setItem(storageKey('baselineSessions'), JSON.stringify(updatedBaseline));
       setBaselineSessions(updatedBaseline);
@@ -197,14 +203,20 @@ export default function Page() {
       return;
     }
 
-    const newSession = createSessionData(sessionNumber, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes, 'intervention', level);
+    const newSession = createSessionData(levelSessionNumbers[level] || 1, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes, 'intervention', level);
     const updatedSessions = [...sessions, newSession];
 
     // Save to localStorage
     localStorage.setItem(storageKey('sightWordsSessions'), JSON.stringify(updatedSessions));
 
     setSessions(updatedSessions);
-    setSessionNumber(sessionNumber + 1);
+    
+    // Increment the session number for this specific level
+    setLevelSessionNumbers(prev => ({
+      ...prev,
+      [level]: (prev[level] || 1) + 1
+    }));
+    
     setTotalScore(totalScore + (result.correct + result.assisted) * 10);
     setTotalWordsLearned(totalWordsLearned + result.total);
     setGameState('history');
@@ -297,7 +309,7 @@ export default function Page() {
           {gameState === 'playing' && (
             <SessionGame
               level={level}
-              sessionNumber={sessionNumber}
+              sessionNumber={levelSessionNumbers[level] || 1}
               onGameComplete={handleGameComplete}
               onCancel={() => setGameState('history')}
               targetWords={level === 0 ? targetWords : undefined}
