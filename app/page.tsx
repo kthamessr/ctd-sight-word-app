@@ -301,6 +301,7 @@ export default function Page() {
                 onChange={(e) => setParticipantInput(e.target.value.trim())}
                 placeholder="New participant ID"
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 md:flex-none"
+                suppressHydrationWarning
               />
               <button
                 onClick={() => {
@@ -310,6 +311,7 @@ export default function Page() {
                   }
                 }}
                 className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold px-4 py-2 rounded-lg whitespace-nowrap"
+                suppressHydrationWarning
               >
                 New Profile
               </button>
