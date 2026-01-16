@@ -2,6 +2,7 @@
 
 export interface SessionData {
   sessionNumber: number;
+  level: number; // Which level (1, 2, 3, or 0 for target words)
   date: string;
   correctAnswers: number;
   assistedAnswers: number;
@@ -48,11 +49,13 @@ export function createSessionData(
   responsesTimes: number[],
   wordsAsked: string[],
   responseTypes: ('correct' | 'assisted' | 'no-answer')[],
-  phase: 'baseline' | 'intervention' = 'intervention'
+  phase: 'baseline' | 'intervention' = 'intervention',
+  level: number = 1
 ): SessionData {
   const promptConfig = getPromptConfig(sessionNumber);
   return {
     sessionNumber,
+    level,
     date: new Date().toISOString(),
     correctAnswers: correct,
     assistedAnswers: assisted,
@@ -65,6 +68,24 @@ export function createSessionData(
     phase,
     promptType: promptConfig.immediate ? 'immediate' : 'delay',
   };
+}
+
+export function calculateMasteryPerLevel(sessions: SessionData[], level: number): boolean {
+  const levelSessions = sessions.filter(s => s.level === level);
+  
+  if (levelSessions.length === 0) return false;
+  
+  // Filter unprompted sessions (constant time delay) for this level
+  const unpromptedSessions = levelSessions.filter(s => s.promptType === 'delay');
+  
+  if (unpromptedSessions.length === 0) return false;
+  
+  // Calculate accuracy for last 3 unprompted sessions
+  const recentUnprompted = unpromptedSessions.slice(-3);
+  const avgAccuracy = recentUnprompted.reduce((sum, s) => sum + s.accuracy, 0) / recentUnprompted.length;
+  
+  // Mastery when unprompted accuracy >= 80% across last 3 sessions OR 90% on last session
+  return avgAccuracy >= 80 || unpromptedSessions[unpromptedSessions.length - 1].accuracy >= 90;
 }
 
 export function calculateMastery(sessions: SessionData[]): { 

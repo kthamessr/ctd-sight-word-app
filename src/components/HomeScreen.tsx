@@ -7,9 +7,10 @@ interface HomeScreenProps {
   participantId: string;
   onStartBaseline: () => void;
   onViewHistory?: () => void;
+  levelMastery?: { level1: boolean; level2: boolean; level3: boolean };
 }
 
-export default function HomeScreen({ onStartGame, participantId, onStartBaseline, onViewHistory }: HomeScreenProps) {
+export default function HomeScreen({ onStartGame, participantId, onStartBaseline, onViewHistory, levelMastery }: HomeScreenProps) {
   const [hasTargetWords, setHasTargetWords] = useState(false);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
           <div className="space-y-32 max-w-4xl mx-auto">
             {/* Top Row - Levels 1, 2, 3 */}
             <div className="grid grid-cols-3 gap-10">
+              {/* Level 1 - Always available */}
               <button
                 onClick={() => onStartGame(1)}
                 className="bg-gradient-to-b from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold py-8 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg"
@@ -40,37 +42,55 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
                 <div className="text-lg">Easy</div>
                 <div className="text-sm opacity-90">Level 1</div>
               </button>
+              
+              {/* Level 2 - Unlocked after Level 1 mastery */}
               <button
                 onClick={() => onStartGame(2)}
-                className="bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-white font-bold py-8 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg"
+                disabled={!levelMastery?.level1}
+                className={`font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
+                  levelMastery?.level1
+                    ? 'bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 hover:scale-105 cursor-pointer'
+                    : 'bg-gray-300 cursor-not-allowed opacity-50'
+                }`}
               >
-                <div className="text-4xl mb-2">🌿</div>
+                <div className="text-4xl mb-2">{levelMastery?.level1 ? '🌿' : '🔒'}</div>
                 <div className="text-lg">Medium</div>
                 <div className="text-sm opacity-90">Level 2</div>
+                {!levelMastery?.level1 && <div className="text-xs mt-2">Master Level 1 first</div>}
               </button>
+              
+              {/* Level 3 - Unlocked after Level 2 mastery */}
               <button
                 onClick={() => onStartGame(3)}
-                className="bg-gradient-to-b from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 text-white font-bold py-8 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg"
+                disabled={!levelMastery?.level2}
+                className={`font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
+                  levelMastery?.level2
+                    ? 'bg-gradient-to-b from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 hover:scale-105 cursor-pointer'
+                    : 'bg-gray-300 cursor-not-allowed opacity-50'
+                }`}
               >
-                <div className="text-4xl mb-2">🔥</div>
+                <div className="text-4xl mb-2">{levelMastery?.level2 ? '🔥' : '🔒'}</div>
                 <div className="text-lg">Hard</div>
                 <div className="text-sm opacity-90">Level 3</div>
+                {!levelMastery?.level2 && <div className="text-xs mt-2">Master Level 2 first</div>}
               </button>
             </div>
 
             {/* Bottom Row - Targeted Words (Full Width) */}
             <button
               onClick={() => onStartGame(0)}
-              disabled={!hasTargetWords}
-              className={`w-full font-bold py-8 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg text-white ${
-                hasTargetWords
-                  ? 'bg-gradient-to-b from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 cursor-pointer'
+              disabled={!hasTargetWords || !levelMastery?.level3}
+              className={`w-full font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
+                hasTargetWords && levelMastery?.level3
+                  ? 'bg-gradient-to-b from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 hover:scale-105 cursor-pointer'
                   : 'bg-gray-300 cursor-not-allowed opacity-50'
               }`}
             >
-              <div className="text-4xl mb-2">🎯</div>
+              <div className="text-4xl mb-2">{levelMastery?.level3 ? '🎯' : '🔒'}</div>
               <div className="text-lg">Targeted Words</div>
               <div className="text-sm opacity-90">Custom Words</div>
+              {!levelMastery?.level3 && <div className="text-xs mt-2">Master Level 3 to unlock</div>}
+              {hasTargetWords && !levelMastery?.level3 && <div className="text-xs">(Master Level 3 first)</div>}
             </button>
 
             {/* Baseline Mode */}

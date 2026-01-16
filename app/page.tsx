@@ -10,7 +10,7 @@ import ParticipantConfig, { ParticipantInfo } from '@/components/ParticipantConf
 import SocialValiditySurvey, { SurveyResponses } from '@/components/SocialValiditySurvey';
 import DataExport from '@/components/DataExport';
 import Logo from '@/components/Logo';
-import { createSessionData, SessionData } from '@/components/sessionUtils';
+import { createSessionData, SessionData, calculateMasteryPerLevel } from '@/components/sessionUtils';
 
 export default function Page() {
   const [participantId, setParticipantId] = useState('P1');
@@ -188,7 +188,7 @@ export default function Page() {
   }) => {
     // Baseline runs are recorded separately and do not advance intervention session count
     if (baselineMode) {
-      const baselineEntry = createSessionData(sessionNumber, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes, 'baseline');
+      const baselineEntry = createSessionData(sessionNumber, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes, 'baseline', level);
       const updatedBaseline = [...baselineSessions, baselineEntry];
       localStorage.setItem(storageKey('baselineSessions'), JSON.stringify(updatedBaseline));
       setBaselineSessions(updatedBaseline);
@@ -197,7 +197,7 @@ export default function Page() {
       return;
     }
 
-    const newSession = createSessionData(sessionNumber, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes);
+    const newSession = createSessionData(sessionNumber, result.correct, result.assisted, result.noAnswer, result.total, result.responsesTimes, result.wordsAsked, result.responseTypes, 'intervention', level);
     const updatedSessions = [...sessions, newSession];
 
     // Save to localStorage
@@ -293,7 +293,7 @@ export default function Page() {
         {/* Main Content */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
           {gameState === 'config' && <ParticipantConfig participantId={participantId} onSave={handleSaveParticipantConfig} currentInfo={participantInfo || undefined} />}
-          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} onStartBaseline={handleStartBaseline} participantId={participantId} onViewHistory={() => setGameState('history')} />}
+          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} onStartBaseline={handleStartBaseline} participantId={participantId} onViewHistory={() => setGameState('history')} levelMastery={{ level1: calculateMasteryPerLevel(sessions, 1), level2: calculateMasteryPerLevel(sessions, 2), level3: calculateMasteryPerLevel(sessions, 3) }} />}
           {gameState === 'playing' && (
             <SessionGame
               level={level}
