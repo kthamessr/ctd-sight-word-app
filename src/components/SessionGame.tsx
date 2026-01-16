@@ -49,6 +49,8 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
   const coinsBarRef = useRef<HTMLDivElement | null>(null);
   const [floatingCoins, setFloatingCoins] = useState<Array<{ id: number; x: number; y: number; endX: number; endY: number; animate: boolean }>>([]);
   const nextCoinIdRef = useRef(1);
+  const [effects, setEffects] = useState<Array<{ id: number; x: number; y: number; kind: 'trail' | 'sparkle' }>>([]);
+  const nextEffectIdRef = useRef(1);
   
   // Get prompt configuration based on session number
   const promptConfig = getPromptConfig(sessionNumber);
@@ -199,7 +201,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
       setRecentGain(gain);
       setTimeout(() => setRecentGain(null), 1000);
 
-      // Floating coin animation from click to coin bar
+      // Floating coin animation from click to coin bar + effects
       const startX = e?.clientX ?? window.innerWidth / 2;
       const startY = e?.clientY ?? window.innerHeight / 2;
       const barRect = coinsBarRef.current?.getBoundingClientRect();
@@ -207,14 +209,49 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
       const endY = barRect ? barRect.top + barRect.height / 2 : 60;
       const id = nextCoinIdRef.current++;
       setFloatingCoins((prev) => [...prev, { id, x: startX, y: startY, endX, endY, animate: false }]);
+
       // Trigger animation on next tick
+      const duration = 700;
+      const dx = endX - startX;
+      const dy = endY - startY;
       setTimeout(() => {
         setFloatingCoins((prev) => prev.map(c => c.id === id ? { ...c, x: c.endX, y: c.endY, animate: true } : c));
       }, 16);
-      // Remove after animation completes
+
+      // Shimmer trail: spawn small pulses along the path
+      for (let i = 1; i <= 5; i++) {
+        const t = (i * duration) / 6; // spaced along flight
+        setTimeout(() => {
+          const px = startX + (dx * t) / duration;
+          const py = startY + (dy * t) / duration;
+          const trailId = nextEffectIdRef.current++;
+          setEffects((prev) => [...prev, { id: trailId, x: px, y: py, kind: 'trail' }]);
+          setTimeout(() => {
+            setEffects((prev) => prev.filter((eff) => eff.id !== trailId));
+          }, 600);
+        }, t);
+      }
+
+      // Arrival sparkles near the coin bar
+      setTimeout(() => {
+        const sparkleCount = 6;
+        for (let i = 0; i < sparkleCount; i++) {
+          const angle = (i / sparkleCount) * Math.PI * 2;
+          const radius = 18 + Math.random() * 10;
+          const sx = endX + Math.cos(angle) * radius;
+          const sy = endY + Math.sin(angle) * radius;
+          const sparkleId = nextEffectIdRef.current++;
+          setEffects((prev) => [...prev, { id: sparkleId, x: sx, y: sy, kind: 'sparkle' }]);
+          setTimeout(() => {
+            setEffects((prev) => prev.filter((eff) => eff.id !== sparkleId));
+          }, 700);
+        }
+      }, duration);
+
+      // Remove coin after animation completes
       setTimeout(() => {
         setFloatingCoins((prev) => prev.filter(c => c.id !== id));
-      }, 900);
+      }, duration + 200);
       
       playCorrectChime();
 
@@ -271,17 +308,28 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
         </div>
       </div>
 
-      {/* Floating Coins Overlay */}
+      {/* Floating Coins + Effects Overlay */}
       <div className="pointer-events-none fixed inset-0 z-50">
+        {/* Effects: shimmer trail and arrival sparkles */}
+        {effects.map((eff) => (
+          <div
+            key={eff.id}
+            style={{ position: 'fixed', left: eff.x, top: eff.y }}
+          >
+            {eff.kind === 'trail' ? (
+              <div className="w-2 h-2 rounded-full bg-yellow-300 opacity-80 animate-ping" />
+            ) : (
+              <span className="text-xl drop-shadow animate-bounce">✨</span>
+            )}
+          </div>
+        ))}
+
+        {/* Floating coins */}
         {floatingCoins.map((coin) => (
           <div
             key={coin.id}
             className="transition-all duration-700 ease-out"
-            style={{
-              position: 'fixed',
-              left: coin.x,
-              top: coin.y,
-            }}
+            style={{ position: 'fixed', left: coin.x, top: coin.y }}
           >
             <span className="text-2xl drop-shadow">🪙</span>
           </div>

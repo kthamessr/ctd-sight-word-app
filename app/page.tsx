@@ -216,12 +216,11 @@ export default function Page() {
       [level]: (prev[level] || 1) + 1
     }));
     
-    setTotalScore(totalScore + (result.correct + result.assisted) * 10);
-        // Points: 10 per unprompted correct, 5 per assisted
-        const sessionPoints = result.sessionPoints ?? (result.correct * 10 + result.assisted * 5);
-        const finalScore = totalScore + sessionPoints;
-        setTotalScore(finalScore);
-        setShowCoinOverlay({ active: true, amount: sessionPoints });
+    // Points: 10 per unprompted correct, 5 per assisted
+    const sessionPoints = result.sessionPoints ?? (result.correct * 10 + result.assisted * 5);
+    const finalScore = totalScore + sessionPoints;
+    setTotalScore(finalScore);
+    setShowCoinOverlay({ active: true, amount: sessionPoints });
         // Animate displayScore count-up to finalScore
         const startScore = displayScore;
         const diff = finalScore - startScore;
