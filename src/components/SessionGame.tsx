@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getPromptConfig, playAudioPrompt } from './sessionUtils';
 import { playCorrectChime } from './audioUtils';
 import { getRandomWords } from './sightWordsData';
@@ -46,6 +46,9 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
   const [showTryAgain, setShowTryAgain] = useState(false);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [recentGain, setRecentGain] = useState<number | null>(null);
+  const coinsBarRef = useRef<HTMLDivElement | null>(null);
+  const [floatingCoins, setFloatingCoins] = useState<Array<{ id: number; x: number; y: number; endX: number; endY: number; animate: boolean }>>([]);
+  const nextCoinIdRef = useRef(1);
   
   // Get prompt configuration based on session number
   const promptConfig = getPromptConfig(sessionNumber);
@@ -165,7 +168,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
   const currentWord = questions[currentQuestion].word;
   const allOptions = questions[currentQuestion].options;
 
-  const handleAnswer = (answer: string) => {
+  const handleAnswer = (answer: string, e?: React.MouseEvent<HTMLButtonElement>) => {
     if (answered) return;
 
     const isCorrectAnswer = answer === currentWord;
@@ -195,6 +198,23 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
       setSessionPoints((prev) => prev + gain);
       setRecentGain(gain);
       setTimeout(() => setRecentGain(null), 1000);
+
+      // Floating coin animation from click to coin bar
+      const startX = e?.clientX ?? window.innerWidth / 2;
+      const startY = e?.clientY ?? window.innerHeight / 2;
+      const barRect = coinsBarRef.current?.getBoundingClientRect();
+      const endX = barRect ? barRect.left + barRect.width / 2 : window.innerWidth / 2;
+      const endY = barRect ? barRect.top + barRect.height / 2 : 60;
+      const id = nextCoinIdRef.current++;
+      setFloatingCoins((prev) => [...prev, { id, x: startX, y: startY, endX, endY, animate: false }]);
+      // Trigger animation on next tick
+      setTimeout(() => {
+        setFloatingCoins((prev) => prev.map(c => c.id === id ? { ...c, x: c.endX, y: c.endY, animate: true } : c));
+      }, 16);
+      // Remove after animation completes
+      setTimeout(() => {
+        setFloatingCoins((prev) => prev.filter(c => c.id !== id));
+      }, 900);
       
       playCorrectChime();
 
@@ -242,13 +262,30 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
 
       {/* Session Tokens */}
       <div className="mb-4 w-full max-w-2xl">
-        <div className="flex items-center justify-center gap-4 bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3">
+        <div ref={coinsBarRef} className="flex items-center justify-center gap-4 bg-yellow-100 border-2 border-yellow-300 rounded-lg p-3">
           <span className="text-2xl">🪙</span>
           <span className="text-lg font-bold text-yellow-700">Session Coins: {sessionPoints}</span>
           {recentGain !== null && (
             <span className="text-sm font-bold text-green-700 bg-green-100 border border-green-300 rounded-full px-3 py-1 animate-bounce">+{recentGain}</span>
           )}
         </div>
+      </div>
+
+      {/* Floating Coins Overlay */}
+      <div className="pointer-events-none fixed inset-0 z-50">
+        {floatingCoins.map((coin) => (
+          <div
+            key={coin.id}
+            className="transition-all duration-700 ease-out"
+            style={{
+              position: 'fixed',
+              left: coin.x,
+              top: coin.y,
+            }}
+          >
+            <span className="text-2xl drop-shadow">🪙</span>
+          </div>
+        ))}
       </div>
 
       {/* Progress Bar */}
@@ -322,7 +359,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
           return (
             <button
               key={index}
-              onClick={() => handleAnswer(option)}
+              onClick={(e) => handleAnswer(option, e)}
               disabled={answered}
               className={`p-8 rounded-xl font-bold text-2xl transition-all transform hover:scale-105 ${buttonClass} ${
                 answered ? 'cursor-default' : 'cursor-pointer hover:shadow-xl'
