@@ -68,6 +68,16 @@ export default function Page() {
       }
     }
 
+    // Check if there's a saved total score (takes precedence)
+    const savedTotalScore = localStorage.getItem(storageKey('totalScore'));
+    if (savedTotalScore) {
+      try {
+        loadedTotalScore = JSON.parse(savedTotalScore);
+      } catch (e) {
+        console.error('Failed to load saved total score:', e);
+      }
+    }
+
     let loadedWords: string[] = [];
     if (savedWords) {
       try {
@@ -220,6 +230,7 @@ export default function Page() {
     const sessionPoints = result.sessionPoints ?? (result.correct * 10 + result.assisted * 5);
     const finalScore = totalScore + sessionPoints;
     setTotalScore(finalScore);
+    localStorage.setItem(storageKey('totalScore'), JSON.stringify(finalScore));
     setShowCoinOverlay({ active: true, amount: sessionPoints });
     // Animate displayScore count-up to finalScore
     const startScore = totalScore;
