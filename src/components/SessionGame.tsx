@@ -269,12 +269,12 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
 
       {/* Question Display */}
       <div className="text-center mb-8 py-6">
-        <h2 className="text-3xl font-semibold text-gray-700 mb-6">
-          {!promptConfig.immediate && !baselineMode ? 'Listen and select the word you heard:' : 'Select the correct word:'}
-        </h2>
-        {/* Only show word for sessions 1-2 (immediate), baseline, or after prompt for sessions 3+ */}
+        {/* Only show the word/placeholder for sessions 1-2 (immediate), baseline, or after prompt for sessions 3+ */}
         {(promptConfig.immediate || baselineMode || showPrompt) && (
-          <div className="text-7xl font-bold text-purple-600 mb-4 py-4">{currentWord}</div>
+          <>
+            <h2 className="text-3xl font-semibold text-gray-700 mb-6">Select the correct word:</h2>
+            <div className="text-7xl font-bold text-purple-600 mb-4 py-4">{currentWord}</div>
+          </>
         )}
         {!promptConfig.immediate && !baselineMode && !showPrompt && (
           <div className="text-5xl font-bold text-gray-400 mb-4 py-4">🔊 Listen...</div>
