@@ -274,16 +274,17 @@ export default function Page() {
     <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-300 to-blue-300 p-4 flex items-center justify-center">
       <div className="max-w-4xl w-full">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-4 mb-2">
-            <Logo size={80} className="drop-shadow-lg" />
-            <h1 className="text-5xl font-bold text-white drop-shadow-lg">
-              Ausum Academic Activities
-            </h1>
-          </div>
-          <div className="text-xl text-white drop-shadow-md text-center">
-            <p>When instruction is engineered,</p>
-            <p>failure becomes unnecessary.</p>
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8">
+            <div className="flex items-center gap-4">
+              <Logo size={80} className="drop-shadow-lg" />
+              <h1 className="text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
+                AUSUM<br />Academic<br />Activities
+              </h1>
+            </div>
+            <div className="text-xl text-white drop-shadow-md text-center lg:text-left">
+              <p className="whitespace-nowrap">When instruction is engineered, failure becomes unnecessary.</p>
+            </div>
           </div>
         </div>
 

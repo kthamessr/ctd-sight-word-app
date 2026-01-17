@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ausum Academic Activities",
+  title: "AUSUM Academic Activities",
   description:
-    "Ausum Academic Activities – an engaging, gamified sight-word intervention with ABA-inspired timing, streaks, and progress tracking.",
+    "AUSUM Academic Activities – an engaging, gamified sight-word intervention with ABA-inspired timing, streaks, and progress tracking.",
 };
 
 export default function RootLayout({
