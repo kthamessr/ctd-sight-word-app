@@ -351,7 +351,7 @@ export default function Page() {
         {/* Main Content */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
           {gameState === 'config' && <ParticipantConfig participantId={participantId} onSave={handleSaveParticipantConfig} currentInfo={participantInfo || undefined} />}
-          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} onStartBaseline={handleStartBaseline} participantId={participantId} onViewHistory={() => setGameState('history')} levelMastery={{ level1: calculateMasteryPerLevel(sessions, 1), level2: calculateMasteryPerLevel(sessions, 2), level3: calculateMasteryPerLevel(sessions, 3) }} />}
+          {gameState === 'home' && <HomeScreen onStartGame={handleStartGame} onStartBaseline={handleStartBaseline} participantId={participantId} onViewHistory={() => setGameState('history')} levelMastery={{ level1: calculateMasteryPerLevel(sessions, 1), level2: calculateMasteryPerLevel(sessions, 2), level3: calculateMasteryPerLevel(sessions, 3) }} participantInfo={participantInfo} />}
           {gameState === 'playing' && (
             <SessionGame
               level={level}

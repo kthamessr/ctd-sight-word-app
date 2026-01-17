@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ParticipantInfo } from './ParticipantConfig';
 
 interface HomeScreenProps {
   onStartGame: (level: number) => void;
@@ -8,10 +9,16 @@ interface HomeScreenProps {
   onStartBaseline: () => void;
   onViewHistory?: () => void;
   levelMastery?: { level1: boolean; level2: boolean; level3: boolean };
+  participantInfo?: ParticipantInfo | null;
 }
 
-export default function HomeScreen({ onStartGame, participantId, onStartBaseline, onViewHistory, levelMastery }: HomeScreenProps) {
+export default function HomeScreen({ onStartGame, participantId, onStartBaseline, onViewHistory, levelMastery, participantInfo }: HomeScreenProps) {
   const [hasTargetWords, setHasTargetWords] = useState(false);
+  
+  // Maximum level available is one less than grade level
+  const maxAvailableLevel = participantInfo ? participantInfo.gradeLevel - 1 : 3;
+  const isLevel2Available = maxAvailableLevel >= 2;
+  const isLevel3Available = maxAvailableLevel >= 3;
 
   useEffect(() => {
     const storageKey = `${participantId}::targetWords`;
@@ -43,36 +50,38 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
                 <div className="text-sm opacity-90">Level 1</div>
               </button>
               
-              {/* Level 2 - Unlocked after Level 1 mastery */}
+              {/* Level 2 - Unlocked after Level 1 mastery and if grade allows */}
               <button
                 onClick={() => onStartGame(2)}
-                disabled={!levelMastery?.level1}
+                disabled={!levelMastery?.level1 || !isLevel2Available}
                 className={`font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
-                  levelMastery?.level1
+                  levelMastery?.level1 && isLevel2Available
                     ? 'bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 hover:scale-105 cursor-pointer'
                     : 'bg-gray-300 cursor-not-allowed opacity-50'
                 }`}
               >
-                <div className="text-4xl mb-2">{levelMastery?.level1 ? '🌿' : '🔒'}</div>
+                <div className="text-4xl mb-2">{levelMastery?.level1 && isLevel2Available ? '🌿' : '🔒'}</div>
                 <div className="text-lg">Medium</div>
                 <div className="text-sm opacity-90">Level 2</div>
-                {!levelMastery?.level1 && <div className="text-xs mt-2">Master Level 1 first</div>}
+                {!isLevel2Available && <div className="text-xs mt-2">Grade level too low</div>}
+                {isLevel2Available && !levelMastery?.level1 && <div className="text-xs mt-2">Master Level 1 first</div>}
               </button>
               
-              {/* Level 3 - Unlocked after Level 2 mastery */}
+              {/* Level 3 - Unlocked after Level 2 mastery and if grade allows */}
               <button
                 onClick={() => onStartGame(3)}
-                disabled={!levelMastery?.level2}
+                disabled={!levelMastery?.level2 || !isLevel3Available}
                 className={`font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
-                  levelMastery?.level2
+                  levelMastery?.level2 && isLevel3Available
                     ? 'bg-gradient-to-b from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 hover:scale-105 cursor-pointer'
                     : 'bg-gray-300 cursor-not-allowed opacity-50'
                 }`}
               >
-                <div className="text-4xl mb-2">{levelMastery?.level2 ? '🔥' : '🔒'}</div>
+                <div className="text-4xl mb-2">{levelMastery?.level2 && isLevel3Available ? '🔥' : '🔒'}</div>
                 <div className="text-lg">Hard</div>
                 <div className="text-sm opacity-90">Level 3</div>
-                {!levelMastery?.level2 && <div className="text-xs mt-2">Master Level 2 first</div>}
+                {!isLevel3Available && <div className="text-xs mt-2">Grade level too low</div>}
+                {isLevel3Available && !levelMastery?.level2 && <div className="text-xs mt-2">Master Level 2 first</div>}
               </button>
             </div>
 
