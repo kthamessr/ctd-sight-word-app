@@ -53,6 +53,9 @@ export function createSessionData(
   level: number = 1
 ): SessionData {
   const promptConfig = getPromptConfig(sessionNumber);
+  // After session 2, count prompted responses as 5% of full value (0.05 weight)
+  const assistedWeight = sessionNumber <= 2 ? 1.0 : 0.05;
+  const weightedScore = correct + (assisted * assistedWeight);
   return {
     sessionNumber,
     level,
@@ -61,7 +64,7 @@ export function createSessionData(
     assistedAnswers: assisted,
     noAnswers: noAnswer,
     totalQuestions: total,
-    accuracy: ((correct + assisted) / total) * 100, // Accuracy includes both correct and assisted
+    accuracy: (weightedScore / total) * 100, // After session 2, prompted responses count as 5%
     timeToRespond: responsesTimes,
     wordsAsked,
     responseTypes,

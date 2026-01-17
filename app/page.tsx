@@ -278,10 +278,13 @@ export default function Page() {
           <div className="flex items-center justify-center gap-4 mb-2">
             <Logo size={80} className="drop-shadow-lg" />
             <h1 className="text-5xl font-bold text-white drop-shadow-lg">
-              Ausome Academic Activities
+              Ausum Academic Activities
             </h1>
           </div>
-          <p className="text-xl text-white drop-shadow-md">When instruction is engineered, failure becomes unnecessary.</p>
+          <div className="text-xl text-white drop-shadow-md text-center">
+            <p>When instruction is engineered,</p>
+            <p>failure becomes unnecessary.</p>
+          </div>
         </div>
 
         {/* Participant Switcher */}

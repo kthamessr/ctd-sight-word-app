@@ -51,6 +51,8 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
   const nextCoinIdRef = useRef(1);
   const [effects, setEffects] = useState<Array<{ id: number; x: number; y: number; kind: 'trail' | 'sparkle' }>>([]);
   const nextEffectIdRef = useRef(1);
+  const [countdown, setCountdown] = useState<number | 'Go!' | null>(3);
+  const [gameStarted, setGameStarted] = useState(false);
   
   // Get prompt configuration based on session number
   const promptConfig = getPromptConfig(sessionNumber);
@@ -77,21 +79,45 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
     Promise.resolve().then(() => setQuestions(questionsData));
   }, [level, targetWords]);
 
+  // Countdown effect before game starts
+  useEffect(() => {
+    if (questions.length === 0 || gameStarted) return;
+    
+    if (countdown === null) {
+      Promise.resolve().then(() => setGameStarted(true));
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (countdown === 3) {
+        setCountdown(2);
+      } else if (countdown === 2) {
+        setCountdown(1);
+      } else if (countdown === 1) {
+        setCountdown('Go!');
+      } else if (countdown === 'Go!') {
+        setCountdown(null);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown, questions.length, gameStarted]);
+
   // Reset per-question timers and start times
   useEffect(() => {
-    if (questions.length === 0) return;
+    if (questions.length === 0 || !gameStarted) return;
     Promise.resolve().then(() => {
       setTimeLeft(10);
       setIsTimerRunning(!baselineMode);
       setShowPrompt(false);
       setPromptDelayRemaining(promptConfig.delay);
     });
-  }, [currentQuestion, questions.length, baselineMode, promptConfig.delay]);
+  }, [currentQuestion, questions.length, baselineMode, promptConfig.delay, gameStarted]);
 
   // For sessions 3+: Play audio immediately, then show word after delay as visual prompt
   useEffect(() => {
     if (baselineMode) return;
-    if (promptConfig.immediate || answered || questions.length === 0) return;
+    if (promptConfig.immediate || answered || questions.length === 0 || !gameStarted) return;
 
     // Play audio immediately when question starts
     if (promptDelayRemaining === promptConfig.delay) {
@@ -109,21 +135,21 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
     if (promptDelayRemaining === 0 && !showPrompt && questions.length > 0) {
       Promise.resolve().then(() => setShowPrompt(true));
     }
-  }, [promptDelayRemaining, showPrompt, answered, questions, currentQuestion, promptConfig.immediate, baselineMode, promptConfig.delay]);
+  }, [promptDelayRemaining, showPrompt, answered, questions, currentQuestion, promptConfig.immediate, baselineMode, promptConfig.delay, gameStarted]);
 
   // Prompt immediately for sessions 1-2
   useEffect(() => {
     if (baselineMode) return;
-    if (!promptConfig.immediate || answered || questions.length === 0) return;
+    if (!promptConfig.immediate || answered || questions.length === 0 || !gameStarted) return;
 
     Promise.resolve().then(() => setShowPrompt(true));
     playAudioPrompt(questions[currentQuestion].word);
-  }, [currentQuestion, promptConfig.immediate, answered, questions, baselineMode]);
+  }, [currentQuestion, promptConfig.immediate, answered, questions, baselineMode, gameStarted]);
 
   // Timer effect
   useEffect(() => {
     if (baselineMode) return;
-    if (!isTimerRunning || answered || questions.length === 0) return;
+    if (!isTimerRunning || answered || questions.length === 0 || !gameStarted) return;
 
     const timer = setTimeout(() => {
       setTimeLeft((prev) => {
@@ -161,10 +187,32 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [timeLeft, isTimerRunning, answered, questions, responsesTimes, currentQuestion, correct, assisted, promptConfig.delay, onGameComplete, showPrompt, baselineMode, responseTypes, noAnswer, sessionPoints]);
+  }, [timeLeft, isTimerRunning, answered, questions, responsesTimes, currentQuestion, correct, assisted, promptConfig.delay, onGameComplete, showPrompt, baselineMode, responseTypes, noAnswer, sessionPoints, gameStarted]);
 
   if (questions.length === 0) {
     return <div className="text-center text-gray-600">Loading questions...</div>;
+  }
+
+  // Show countdown overlay
+  if (countdown !== null) {
+    const positions = [
+      { label: '3', position: 'bottom-left', style: 'bottom-4 left-4' },
+      { label: '2', position: 'bottom-right', style: 'bottom-4 right-4' },
+      { label: '1', position: 'top-right', style: 'top-4 right-4' },
+      { label: 'Go!', position: 'top-left', style: 'top-4 left-4' }
+    ];
+    
+    const currentPos = countdown === 3 ? positions[0] : countdown === 2 ? positions[1] : countdown === 1 ? positions[2] : positions[3];
+    
+    return (
+      <div className="fixed inset-0 bg-purple-900/80 flex items-center justify-center z-50">
+        <div className="relative w-full h-full max-w-4xl">
+          <div className={`absolute ${currentPos.style} text-9xl font-bold text-white drop-shadow-2xl animate-bounce`}>
+            {countdown}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const currentWord = questions[currentQuestion].word;
@@ -429,13 +477,19 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
       {/* Feedback */}
       {answered && (
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">
-            {showPrompt ? '✅ Correct with prompt!' : '✅ Correct!'}
-          </div>
+          {selectedAnswer === null ? (
+            <div className="text-4xl mb-2 text-red-600">
+              ⏰ Time&apos;s Up!
+            </div>
+          ) : (
+            <div className="text-4xl mb-2">
+              {showPrompt ? '✅ Correct with prompt!' : '✅ Correct!'}
+            </div>
+          )}
           <p className="text-gray-700">
             The correct answer is: <span className="font-bold text-purple-600">{currentWord}</span>
           </p>
-          {!baselineMode && !promptConfig.immediate && <p className="text-xs text-gray-500 mt-2">Response time: {(10 - timeLeft).toFixed(1)}s</p>}
+          {!baselineMode && !promptConfig.immediate && selectedAnswer !== null && <p className="text-xs text-gray-500 mt-2">Response time: {(10 - timeLeft).toFixed(1)}s</p>}
         </div>
       )}
 

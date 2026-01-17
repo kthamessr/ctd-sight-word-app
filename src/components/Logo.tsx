@@ -17,7 +17,7 @@ export default function Logo({ size = 80, className = '' }: LogoProps) {
       {/* Background Circle */}
       <circle cx="50" cy="50" r="48" fill="white" stroke="#9333EA" strokeWidth="3" />
       
-      {/* Large "A" for Ausome */}
+      {/* Large "A" for Ausum */}
       <text
         x="50"
         y="55"

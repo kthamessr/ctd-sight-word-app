@@ -97,7 +97,7 @@ export default function SocialValiditySurvey({ onComplete, participantId = '' }:
     <div className="max-w-3xl mx-auto">
       <div className="mb-8 text-center">
         <h2 className="text-3xl font-bold text-purple-600 mb-2">Social Validity Survey</h2>
-        <p className="text-gray-600">Please rate your experience with the Ausome Academic Activities intervention</p>
+        <p className="text-gray-600">Please rate your experience with the Ausum Academic Activities intervention</p>
       </div>
 
       {/* Participant ID */}

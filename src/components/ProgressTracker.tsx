@@ -15,7 +15,7 @@ export default function ProgressTracker({ score, level, streak, wordsLearned }: 
         <div className="text-3xl font-bold">{score}</div>
       </div>
       <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg p-4 text-white shadow-lg">
-        <div className="text-sm font-semibold opacity-90">Level</div>
+        <div className="text-sm font-semibold opacity-90">Reading Level</div>
         <div className="text-3xl font-bold">{level}</div>
       </div>
       <div className="bg-gradient-to-br from-orange-400 to-red-600 rounded-lg p-4 text-white shadow-lg">
