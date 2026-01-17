@@ -283,7 +283,7 @@ export default function Page() {
               </h1>
             </div>
             <div className="text-xl text-white drop-shadow-md text-center lg:text-left">
-              <p className="whitespace-nowrap">When instruction is engineered, failure becomes unnecessary.</p>
+              <p>When instruction is engineered,<br />failure becomes unnecessary.</p>
             </div>
           </div>
         </div>
