@@ -317,7 +317,8 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
           const wordsAsked = questions.map((q) => q.word);
           const totalCorrect = (isAssisted ? correct : correct + 1);
           const totalAssisted = isAssisted ? assisted + 1 : assisted;
-          onGameComplete({ correct: totalCorrect, assisted: totalAssisted, noAnswer, total: questions.length, newStreak: totalCorrect === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked, responseTypes: newResponseTypes, sessionPoints });
+          const finalSessionPoints = sessionPoints + gain; // Include the current question's points
+          onGameComplete({ correct: totalCorrect, assisted: totalAssisted, noAnswer, total: questions.length, newStreak: totalCorrect === questions.length ? 1 : 0, responsesTimes: newResponsesTimes, wordsAsked, responseTypes: newResponseTypes, sessionPoints: finalSessionPoints });
         }
       }, 2000);
     } else {
