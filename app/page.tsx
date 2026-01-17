@@ -282,8 +282,9 @@ export default function Page() {
                 AUSUM<br />Academic<br />Activities
               </h1>
             </div>
-            <div className="text-xl text-white drop-shadow-md text-center lg:text-left">
-              <p>When instruction is engineered,<br />failure becomes unnecessary.</p>
+            <div className="flex flex-wrap gap-2 justify-center lg:justify-start text-xl text-white drop-shadow-md">
+              <p>When instruction is engineered,</p>
+              <p>failure becomes unnecessary.</p>
             </div>
           </div>
         </div>
