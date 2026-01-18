@@ -28,16 +28,75 @@ export function getPromptConfig(sessionNumber: number): AudioPromptConfig {
   return { immediate: false, delay: 3000 }; // 3 second delay
 }
 
-export function playAudioPrompt(word: string) {
-  // Use Web Speech API for text-to-speech
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    window.speechSynthesis.cancel(); // Cancel any pending speech
-    window.speechSynthesis.speak(utterance);
+let ttsPrimed = false;
+
+export function primeAudioOnUserGesture() {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+  const synth = window.speechSynthesis;
+
+  // Kick voice loading early
+  synth.getVoices();
+
+  // Silent utterance to "unlock" on iOS (must be called inside a tap/click)
+  try {
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    synth.speak(u);
+    ttsPrimed = true;
+  } catch {
+    // ignore
   }
+}
+
+function ensureVoicesReady(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return resolve();
+
+    const synth = window.speechSynthesis;
+    const voices = synth.getVoices();
+    if (voices && voices.length) return resolve();
+
+    const handler = () => {
+      const v = synth.getVoices();
+      if (v && v.length) {
+        synth.removeEventListener("voiceschanged", handler);
+        resolve();
+      }
+    };
+
+    synth.addEventListener("voiceschanged", handler);
+
+    // Fallback: don't hang forever
+    setTimeout(() => {
+      synth.removeEventListener("voiceschanged", handler);
+      resolve();
+    }, 800);
+  });
+}
+
+export async function playAudioPrompt(word: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+  // If you never primed on a tap/click, iOS may block speech when called from timers.
+  // Still try, but priming is the real fix.
+  await ensureVoicesReady();
+
+  const synth = window.speechSynthesis;
+  synth.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  utterance.lang = "en-US";
+
+  utterance.onerror = (e) => {
+    console.warn("TTS error:", (e as any)?.error, "primed:", ttsPrimed);
+  };
+
+  synth.speak(utterance);
 }
 
 export function createSessionData(

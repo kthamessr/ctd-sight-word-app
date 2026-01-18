@@ -10,7 +10,7 @@ import ParticipantConfig, { ParticipantInfo } from '@/components/ParticipantConf
 import SocialValiditySurvey, { SurveyResponses } from '@/components/SocialValiditySurvey';
 import DataExport from '@/components/DataExport';
 import Logo from '@/components/Logo';
-import { createSessionData, SessionData, calculateMasteryPerLevel } from '@/components/sessionUtils';
+import { createSessionData, SessionData, calculateMasteryPerLevel, primeAudioOnUserGesture } from '@/components/sessionUtils';
 
 export default function Page() {
   const [participantId, setParticipantId] = useState('P1');
@@ -173,6 +173,9 @@ export default function Page() {
       return;
     }
     
+    // Prime TTS on user gesture (fixes iOS blocking)
+    primeAudioOnUserGesture();
+    
     const actualLevel = getActualLevel(selectedLevel);
     setLevel(actualLevel);
     setGameState('playing');
@@ -184,6 +187,10 @@ export default function Page() {
       setGameState('wordManager');
       return;
     }
+    
+    // Prime TTS on user gesture (fixes iOS blocking)
+    primeAudioOnUserGesture();
+    
     setBaselineMode(true);
     setLevel(0);
     // Baseline session numbering is tracked separately
