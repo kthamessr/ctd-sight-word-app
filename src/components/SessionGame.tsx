@@ -108,23 +108,23 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
     if (questions.length === 0 || !gameStarted) return;
     Promise.resolve().then(() => {
       setTimeLeft(10);
-      setIsTimerRunning(!baselineMode);
+      setIsTimerRunning(!baselineMode && level !== 4); // No timer for baseline or Target Words (level 4)
       setShowPrompt(false);
       setPromptDelayRemaining(promptConfig.delay);
     });
-  }, [currentQuestion, questions.length, baselineMode, promptConfig.delay, gameStarted]);
+  }, [currentQuestion, questions.length, baselineMode, promptConfig.delay, gameStarted, level]);
 
-  // Baseline mode: Play audio when question starts
+  // Baseline mode and Target Words (level 4): Play audio when question starts
   useEffect(() => {
-    if (!baselineMode) return;
+    if (!baselineMode && level !== 4) return; // Only for baseline or Target Words
     if (answered || questions.length === 0 || !gameStarted) return;
 
     playAudioPrompt(questions[currentQuestion].word);
-  }, [currentQuestion, answered, questions, baselineMode, gameStarted]);
+  }, [currentQuestion, answered, questions, baselineMode, gameStarted, level]);
 
   // For sessions 3+: Play audio immediately, then show word after delay as visual prompt
   useEffect(() => {
-    if (baselineMode) return;
+    if (baselineMode || level === 4) return; // No prompts for baseline or Target Words
     if (promptConfig.immediate || answered || questions.length === 0 || !gameStarted) return;
 
     // Play audio immediately when question starts
@@ -147,7 +147,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
 
   // Prompt immediately for sessions 1-2
   useEffect(() => {
-    if (baselineMode) return;
+    if (baselineMode || level === 4) return; // No prompts for baseline or Target Words
     if (!promptConfig.immediate || answered || questions.length === 0 || !gameStarted) return;
 
     Promise.resolve().then(() => setShowPrompt(true));
@@ -156,7 +156,7 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
 
   // Timer effect
   useEffect(() => {
-    if (baselineMode) return;
+    if (baselineMode || level === 4) return; // No timer for baseline or Target Words
     if (!isTimerRunning || answered || questions.length === 0 || !gameStarted) return;
 
     const timer = setTimeout(() => {
@@ -483,8 +483,8 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
         </div>
       )}
 
-      {/* Feedback */}
-      {answered && (
+      {/* Feedback - Hide for baseline and Target Words (level 4) */}
+      {answered && !baselineMode && level !== 4 && (
         <div className="text-center mb-8">
           {selectedAnswer === null ? (
             <div className="text-4xl mb-2 text-red-600">

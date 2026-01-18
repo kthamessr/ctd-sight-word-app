@@ -155,7 +155,7 @@ export default function Page() {
   };
 
   const getActualLevel = (selectedLevel: number): number => {
-    if (!participantInfo || selectedLevel === 0) return selectedLevel;
+    if (!participantInfo || selectedLevel === 4) return selectedLevel; // Level 4 = Target Words
     
     // Level 1 = reading level, Level 3 = grade level, Level 2 = halfway between
     if (selectedLevel === 1) return participantInfo.readingLevel;
@@ -167,7 +167,7 @@ export default function Page() {
 
   const handleStartGame = (selectedLevel: number) => {
     setBaselineMode(false);
-    if (selectedLevel === 0 && targetWords.length < 10) {
+    if (selectedLevel === 4 && targetWords.length < 10) {
       alert('Please set up at least 10 target words first!');
       setGameState('wordManager');
       return;
@@ -358,7 +358,7 @@ export default function Page() {
               sessionNumber={levelSessionNumbers[level] || 1}
               onGameComplete={handleGameComplete}
               onCancel={() => setGameState('history')}
-              targetWords={level === 0 ? targetWords : undefined}
+              targetWords={level === 4 || baselineMode ? targetWords : undefined}
               baselineMode={baselineMode}
             />
           )}

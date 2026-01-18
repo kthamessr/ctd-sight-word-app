@@ -14,6 +14,7 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ onStartGame, participantId, onStartBaseline, onViewHistory, levelMastery, participantInfo }: HomeScreenProps) {
   const [hasTargetWords, setHasTargetWords] = useState(false);
+  const [targetWordsCompleted, setTargetWordsCompleted] = useState(false);
   
   // Level 1 = reading level, Level 2 = midway, Level 3 = grade level
   // All three levels are always available when grade level is set
@@ -24,6 +25,13 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
     const storageKey = `${participantId}::targetWords`;
     const savedWords = localStorage.getItem(storageKey);
     setHasTargetWords(!!savedWords && JSON.parse(savedWords).length > 0);
+    
+    // Check if target words session has been completed (level 4)
+    const sessionsKey = `${participantId}::sightWordsSessions`;
+    const savedSessions = localStorage.getItem(sessionsKey);
+    const sessions = savedSessions ? JSON.parse(savedSessions) : [];
+    const hasTargetWordsSession = sessions.some((s: any) => s.level === 4);
+    setTargetWordsCompleted(hasTargetWordsSession);
   }, [participantId]);
 
   return (
@@ -83,21 +91,21 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
               </button>
             </div>
 
-            {/* Bottom Row - Targeted Words (Full Width) */}
+            {/* Bottom Row - Targeted Words (Full Width) - Level 4 */}
             <button
-              onClick={() => onStartGame(0)}
-              disabled={!hasTargetWords || !levelMastery?.level3}
+              onClick={() => onStartGame(4)}
+              disabled={!hasTargetWords || !levelMastery?.level3 || targetWordsCompleted}
               className={`w-full font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
-                hasTargetWords && levelMastery?.level3
+                hasTargetWords && levelMastery?.level3 && !targetWordsCompleted
                   ? 'bg-gradient-to-b from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 hover:scale-105 cursor-pointer'
                   : 'bg-gray-300 cursor-not-allowed opacity-50'
               }`}
             >
-              <div className="text-4xl mb-2">{levelMastery?.level3 ? '🎯' : '🔒'}</div>
+              <div className="text-4xl mb-2">{targetWordsCompleted ? '✅' : !levelMastery?.level3 ? '🔒' : '🎯'}</div>
               <div className="text-lg">Targeted Words</div>
-              <div className="text-sm opacity-90">Custom Words</div>
-              {!levelMastery?.level3 && <div className="text-xs mt-2">Master Level 3 to unlock</div>}
-              {hasTargetWords && !levelMastery?.level3 && <div className="text-xs">(Master Level 3 first)</div>}
+              <div className="text-sm opacity-90">Audio only · No prompts · No timer</div>
+              {targetWordsCompleted && <div className="text-xs mt-2">Completed (1 session limit)</div>}
+              {!targetWordsCompleted && !levelMastery?.level3 && <div className="text-xs mt-2">Master Level 3 to unlock</div>}
             </button>
 
             {/* Baseline Mode */}
