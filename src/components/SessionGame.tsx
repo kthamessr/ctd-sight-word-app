@@ -109,21 +109,17 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
     Promise.resolve().then(() => {
       setTimeLeft(10);
       setIsTimerRunning(!baselineMode);
-      setShowPrompt(false);
-      setPromptDelayRemaining(promptConfig.delay);
+      setShowPrompt(true); // Show visual prompt immediately
+      setPromptDelayRemaining(3000); // Audio plays after 3 seconds
     });
-  }, [currentQuestion, questions.length, baselineMode, promptConfig.delay, gameStarted]);
+  }, [currentQuestion, questions.length, baselineMode, gameStarted]);
 
-  // For sessions 3+: Play audio immediately, then show word after delay as visual prompt
+  // Play audio after 3 second delay for all sessions
   useEffect(() => {
     if (baselineMode) return;
-    if (promptConfig.immediate || answered || questions.length === 0 || !gameStarted) return;
+    if (answered || questions.length === 0 || !gameStarted) return;
 
-    // Play audio immediately when question starts
-    if (promptDelayRemaining === promptConfig.delay) {
-      playAudioPrompt(questions[currentQuestion].word);
-    }
-
+    // Play audio after 3 seconds
     if (promptDelayRemaining > 0) {
       const timer = setTimeout(() => {
         setPromptDelayRemaining((prev) => prev - 1000);
@@ -131,20 +127,12 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
       return () => clearTimeout(timer);
     }
 
-    // After 3 seconds, show the word as visual prompt
-    if (promptDelayRemaining === 0 && !showPrompt && questions.length > 0) {
-      Promise.resolve().then(() => setShowPrompt(true));
+    // When 3 second delay is up, play audio
+    if (promptDelayRemaining === 0 && questions.length > 0) {
+      playAudioPrompt(questions[currentQuestion].word);
     }
-  }, [promptDelayRemaining, showPrompt, answered, questions, currentQuestion, promptConfig.immediate, baselineMode, promptConfig.delay, gameStarted]);
+  }, [promptDelayRemaining, answered, questions, currentQuestion, baselineMode, gameStarted]);
 
-  // Prompt immediately for sessions 1-2
-  useEffect(() => {
-    if (baselineMode) return;
-    if (!promptConfig.immediate || answered || questions.length === 0 || !gameStarted) return;
-
-    Promise.resolve().then(() => setShowPrompt(true));
-    playAudioPrompt(questions[currentQuestion].word);
-  }, [currentQuestion, promptConfig.immediate, answered, questions, baselineMode, gameStarted]);
 
   // Timer effect
   useEffect(() => {
@@ -231,8 +219,8 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
       const newResponsesTimes = [...responsesTimes, responseSeconds];
       setResponsesTimes(newResponsesTimes);
       
-      // Determine if correct or assisted based on prompt visibility
-      const isAssisted = showPrompt;
+      // Determine if correct or assisted based on whether audio prompt has played (after 3 second delay)
+      const isAssisted = promptDelayRemaining <= 0; // Audio has played if delay expired
       const newResponseType: 'correct' | 'assisted' = isAssisted ? 'assisted' : 'correct';
       const newResponseTypes = [...responseTypes, newResponseType] as ('correct' | 'assisted' | 'no-answer')[];
       setResponseTypes(newResponseTypes);
@@ -415,28 +403,21 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
         </div>
       )}
 
-      {!baselineMode && !promptConfig.immediate && showPrompt && (
-        <div className="text-center mb-8 p-4 bg-green-100 rounded-lg border-2 border-green-500 max-w-md mx-auto">
-          <p className="text-base font-semibold text-green-700">📝 Visual prompt shown</p>
+      {!baselineMode && promptDelayRemaining > 0 && (
+        <div className="text-center mb-8 p-4 bg-blue-100 rounded-lg border-2 border-blue-500 max-w-md mx-auto">
+          <p className="text-base font-semibold text-blue-700">🔊 Audio prompt in {Math.ceil(promptDelayRemaining / 1000)} seconds...</p>
         </div>
       )}
 
       {/* Question Display */}
       <div className="text-center mb-8 py-6">
-        {/* Only show the word/placeholder for sessions 1-2 (immediate), baseline, or after prompt for sessions 3+ */}
-        {(promptConfig.immediate || baselineMode || showPrompt) && (
-          <>
-            <h2 className="text-3xl font-semibold text-gray-700 mb-6">Select the correct word:</h2>
-            <div className="text-7xl font-bold text-purple-600 mb-4 py-4">{currentWord}</div>
-          </>
-        )}
-        {!promptConfig.immediate && !baselineMode && !showPrompt && (
-          <div className="text-5xl font-bold text-gray-400 mb-4 py-4">🔊 Listen...</div>
-        )}
+        {/* Always show the word immediately */}
+        <>
+          <h2 className="text-3xl font-semibold text-gray-700 mb-6">Select the correct word:</h2>
+          <div className="text-7xl font-bold text-purple-600 mb-4 py-4">{currentWord}</div>
+        </>
         <p className="text-gray-600 text-base">
-          {baselineMode ? 'Choose the correct spelling.' : 
-           !promptConfig.immediate && !showPrompt ? 'Listen carefully to the word.' :
-           'Choose the correct spelling.'}
+          {baselineMode ? 'Choose the correct spelling.' : 'Audio prompt coming in 3 seconds...'}
         </p>
       </div>
 
