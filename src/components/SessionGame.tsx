@@ -114,6 +114,14 @@ export default function SessionGame({ level, sessionNumber, targetWords, baselin
     });
   }, [currentQuestion, questions.length, baselineMode, promptConfig.delay, gameStarted]);
 
+  // Baseline mode: Play audio when question starts
+  useEffect(() => {
+    if (!baselineMode) return;
+    if (answered || questions.length === 0 || !gameStarted) return;
+
+    playAudioPrompt(questions[currentQuestion].word);
+  }, [currentQuestion, answered, questions, baselineMode, gameStarted]);
+
   // For sessions 3+: Play audio immediately, then show word after delay as visual prompt
   useEffect(() => {
     if (baselineMode) return;
