@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ParticipantInfo } from './ParticipantConfig';
+import { primeAudioOnUserGesture } from './sessionUtils';
 
 interface HomeScreenProps {
   onStartGame: (level: number) => void;
@@ -42,7 +43,10 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
             <div className="grid grid-cols-3 gap-10">
               {/* Level 1 - Always available */}
               <button
-                onClick={() => onStartGame(1)}
+                onClick={() => {
+                  primeAudioOnUserGesture();
+                  onStartGame(1);
+                }}
                 className="bg-gradient-to-b from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold py-8 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg"
               >
                 <div className="text-4xl mb-2">🌱</div>
@@ -52,7 +56,10 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
               
               {/* Level 2 - Unlocked after Level 1 mastery */}
               <button
-                onClick={() => onStartGame(2)}
+                onClick={() => {
+                  primeAudioOnUserGesture();
+                  onStartGame(2);
+                }}
                 disabled={!levelMastery?.level1}
                 className={`font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
                   levelMastery?.level1
@@ -68,7 +75,10 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
               
               {/* Level 3 - Unlocked after Level 2 mastery */}
               <button
-                onClick={() => onStartGame(3)}
+                onClick={() => {
+                  primeAudioOnUserGesture();
+                  onStartGame(3);
+                }}
                 disabled={!levelMastery?.level2}
                 className={`font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
                   levelMastery?.level2
@@ -85,7 +95,10 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
 
             {/* Bottom Row - Targeted Words (Full Width) */}
             <button
-              onClick={() => onStartGame(0)}
+              onClick={() => {
+                primeAudioOnUserGesture();
+                onStartGame(0);
+              }}
               disabled={!hasTargetWords || !levelMastery?.level3}
               className={`w-full font-bold py-8 px-6 rounded-xl transition-all transform shadow-lg text-white ${
                 hasTargetWords && levelMastery?.level3
@@ -102,7 +115,10 @@ export default function HomeScreen({ onStartGame, participantId, onStartBaseline
 
             {/* Baseline Mode */}
             <button
-              onClick={onStartBaseline}
+              onClick={() => {
+                primeAudioOnUserGesture();
+                onStartBaseline();
+              }}
               disabled={!hasTargetWords}
               className={`w-full font-bold py-6 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg text-white ${
                 hasTargetWords

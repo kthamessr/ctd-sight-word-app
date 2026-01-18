@@ -1,6 +1,6 @@
 'use client';
 
-import { SessionData, calculateMastery } from './sessionUtils';
+import { SessionData, calculateMastery, primeAudioOnUserGesture } from './sessionUtils';
 
 interface SessionHistoryProps {
   sessions: SessionData[];
@@ -97,7 +97,10 @@ export default function SessionHistory({ sessions, onNewSession, onExportData }:
       {/* Start New Session Button */}
       <div className="flex gap-4">
         <button
-          onClick={onNewSession}
+          onClick={() => {
+            primeAudioOnUserGesture();
+            onNewSession();
+          }}
           className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-lg transition-all transform hover:scale-105 text-lg"
         >
           {sessions.length === 0 ? '🎮 Start Session 1' : `🎮 Start Session ${sessions.length + 1}`}
